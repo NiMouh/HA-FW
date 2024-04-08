@@ -11,6 +11,7 @@
 - Load-Balancers (Simão e Ana)
 - Configuração da Firewall:
   - Zonas e Regras (Ana e Simão);
+- Questões Finais (Ana e Simão)
 - Testes de Funcionamento (Ana e Simão)
 - Conclusão (ChatGPT)
 
