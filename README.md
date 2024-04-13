@@ -283,6 +283,8 @@ R: A sincronização feita nos load balancers permite que os pedidos do cliente 
 Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
 
 2. Which load balancing algorithm may also allow the nonexistence of load-balancers synchronization?
-3. Explain why device/connection states synchronization may be detrimental during a DDoS attack
+   R: Using IP Hash LB algorithms doesn't require routing history synchronization (between LB). Using other LB algorithms, they must share routing history.
+4. Explain why device/connection states synchronization may be detrimental during a DDoS attack
+   R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na detecção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
 
 ## Ponto 10 (Ainda não chegámos aqui)
