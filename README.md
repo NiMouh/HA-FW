@@ -276,13 +276,43 @@ set zone-policy zone OUTSIDE interface eth3
 
 Listagem de regras entre zonas:
 1. Permitir qualquer tráfego de saída do INSIDE para o OUTSIDE;
-2. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados do INSIDE;
+2. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados (ip privado: 10.1.1.0/24);
 3. Bloquear pacotes ICMP do OUTSIDE para o INSIDE;
 4. Permitir tráfego de entrada do OUTSIDE para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
 5. Bloquear qualquer tráfego de entrada do OUTSIDE para o INSIDE nas portas não autorizadas; (Ana Vidal)
 **Só depois de implementar o DMZ**
-5. Permitir tráfego de saída do INSIDE para um servidor específico no DMZ na porta 443 (HTTPS);(Ana Vidal)
-6. Permitir tráfego de entrada do DMZ para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
+1. Permitir tráfego de saída do INSIDE para um servidor específico no DMZ na porta 443 (HTTPS);(Ana Vidal)
+2. Permitir tráfego de entrada do DMZ para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
+
+
+#### Regra 1
+```cli
+set firewall name INSIDE-OUTSIDE rule 1 action accept
+set firewall name INSIDE-OUTSIDE rule 1 source zone INSIDE
+set firewall name INSIDE-OUTSIDE rule 1 destination zone OUTSIDE
+set firewall name INSIDE-OUTSIDE rule 1 state established enable
+set zone-policy zone INSIDE from OUTSIDE firewall name INSIDE-OUTSIDE
+
+commit
+save
+```
+
+#### Regra 2 (ip privado: 10.1.1.0/24)
+
+```cli
+set firewall name OUTSIDE-INSIDE rule 2 action drop
+set firewall name OUTSIDE-INSIDE rule 2 source zone OUTSIDE
+set firewall name OUTSIDE-INSIDE rule 2 destination address 10.1.1.0/24
+```
+
+#### Regra 3
+
+```cli
+set firewall name OUTSIDE-INSIDE rule 3 action drop
+set firewall name OUTSIDE-INSIDE rule 3 source zone OUTSIDE
+set firewall name OUTSIDE-INSIDE rule 3 destination zone INSIDE
+set firewall name OUTSIDE-INSIDE rule 3 protocol icmp
+```
 
 ### Questões finais
 
