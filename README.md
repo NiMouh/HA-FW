@@ -239,9 +239,40 @@ save
 
 ### Sincronização de Estados (*State Synchronization*)
 
+VRRP no LB1A e LB1B:
+```cli
+set high-availability vrrp group LBCluster1 vrid 10
+set high-availability vrrp group LBCluster1 interface eth5
+set high-availability vrrp group LBCluster1 virtual-address 192.168.101.1/24
+set high-availability vrrp sync-group LBCluster1 member LBCluster1
+set high-availability vrrp group LBCluster1 rfc3768-compatibility
+```
+
+conntrack-sync no LB1A e LB1B:
+```cli
+set service conntrack-sync accept-protocol 'tcp,udp,icmp'
+set service conntrack-sync failover-mechanism vrrp sync-group LBCluster1
+set service conntrack-sync interface eth5
+set service conntrack-sync mcast-group 225.0.0.51
+set service conntrack-sync disable-external-cache
+```
+
 ### Definição de Zonas
 
+Definição de Zona Inside:
+```cli
+set zone-policy zone INSIDE description "Inside (Internal Network)"
+set zone-policy zone INSIDE interface eth0
+set zone-policy zone INSIDE interface eth1
+```
+
 ### Regras entre Zonas
+
+Listagem de regras entre zonas:
+1. Permitir qualquer tráfego de saída do INSIDE para o OUTSIDE;
+2. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados do INSIDE;
+3. Bloquear pacotes ICMP do OUTSIDE para o INSIDE;
+4. (Por fazer mais regras)
 
 ### Questões finais
 
