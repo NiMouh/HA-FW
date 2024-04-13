@@ -44,7 +44,7 @@ Explicar os seguintes conceitos:
   <img src="image.png" alt="Topologia" width="1000"/>
 </p>
 
-### Configuração Inicial
+### Rotas e Conectividade da Rede
 
 Vamos começar por atribuir os endereços IP às interfaces dos routers e aos computadores de acordo com o enunciado.
 
@@ -171,7 +171,39 @@ commit
 save
 ```
 
-### Rotas e Conectividade da Rede
+### Load-Balancers
+
+LB1A (*load balancer* superior interno):
+```cli
+set load-balancing wan interface-health eth1 next-hop 10.0.1.12
+set load-balancing wan interface-health eth2 next-hop 10.0.6.2
+set load-balancing wan interface-health eth3 next-hop 10.3.1.2
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 eth1 weight 1
+set load-balancing wan rule 1 eth2 weight 1
+set load-balancing wan rule 1 eth3 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
+
+commit
+save
+```
+
+LB1B (*load balancer* inferior interno):
+```cli
+set load-balancing wan interface-health eth1 next-hop 10.0.5.2
+set load-balancing wan interface-health eth2 next-hop 10.0.2.13
+set load-balancing wan interface-health eth3 next-hop 10.0.3.1
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 eth1 weight 1
+set load-balancing wan rule 1 eth2 weight 1
+set load-balancing wan rule 1 eth3 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
+
+commit
+save
+```
 
 ### Sincronização de Estados (*State Synchronization*)
 
