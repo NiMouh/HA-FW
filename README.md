@@ -327,6 +327,42 @@ set firewall name OUTSIDE-INSIDE rule 3 destination zone INSIDE
 set firewall name OUTSIDE-INSIDE rule 3 protocol icmp
 ```
 
+#### Regra 4
+```cli
+set firewall name OUTSIDE-TO-INSIDE rule 10 action accept
+set firewall name OUTSIDE-TO-INSIDE rule 10 protocol tcp
+set firewall name OUTSIDE-TO-INSIDE rule 10 destination port 80
+set firewall name OUTSIDE-TO-INSIDE rule 20 action accept
+set firewall name OUTSIDE-TO-INSIDE rule 20 protocol tcp
+set firewall name OUTSIDE-TO-INSIDE rule 20 destination port 443
+set firewall name OUTSIDE-TO-INSIDE default-action drop
+```
+
+#### Regra 5
+```cli
+set firewall name OUTSIDE-TO-INSIDE rule 30 action drop
+```
+
+#### Regra 6
+```cli
+set firewall name INSIDE-TO-DMZ rule 10 action accept
+set firewall name INSIDE-TO-DMZ rule 10 protocol tcp
+set firewall name INSIDE-TO-DMZ rule 10 destination address <endereço_do_servidor_DMZ>
+set firewall name INSIDE-TO-DMZ rule 10 destination port 443
+set firewall name INSIDE-TO-DMZ default-action drop
+```
+
+#### Regra 7
+```cli
+set firewall name DMZ-TO-INSIDE rule 10 action accept
+set firewall name DMZ-TO-INSIDE rule 10 protocol tcp
+set firewall name DMZ-TO-INSIDE rule 10 destination port 80
+set firewall name DMZ-TO-INSIDE rule 20 action accept
+set firewall name DMZ-TO-INSIDE rule 20 protocol tcp
+set firewall name DMZ-TO-INSIDE rule 20 destination port 443
+set firewall name DMZ-TO-INSIDE default-action drop
+```
+
 ### Questões finais
 
 1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.
