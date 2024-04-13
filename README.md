@@ -278,11 +278,11 @@ Listagem de regras entre zonas:
 1. Permitir qualquer tráfego de saída do INSIDE para o OUTSIDE;
 2. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados do INSIDE;
 3. Bloquear pacotes ICMP do OUTSIDE para o INSIDE;
-4. Permitir tráfego de entrada do OUTSIDE para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS);
-5. Bloquear qualquer tráfego de entrada do OUTSIDE para o INSIDE nas portas não autorizadas;
+4. Permitir tráfego de entrada do OUTSIDE para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
+5. Bloquear qualquer tráfego de entrada do OUTSIDE para o INSIDE nas portas não autorizadas; (Ana Vidal)
 **Só depois de implementar o DMZ**
-5. Permitir tráfego de saída do INSIDE para um servidor específico no DMZ na porta 443 (HTTPS);
-6. Permitir tráfego de entrada do DMZ para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS);
+5. Permitir tráfego de saída do INSIDE para um servidor específico no DMZ na porta 443 (HTTPS);(Ana Vidal)
+6. Permitir tráfego de entrada do DMZ para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
 
 ### Questões finais
 
