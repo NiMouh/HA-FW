@@ -5,7 +5,7 @@
 - Simão Andrade (118345)
 
 ## Estrutura do Relatório
-- Introdução (ChatGPT)
+- Introdução;
 - Estado-de-Arte (Simão)
 - Rotas de Rede e conectividade;
 - Load-Balancers;
@@ -26,6 +26,9 @@ Temos as seguintes tarefas a serem realizadas:
 - [ ] Zones definition (3 valores).
 - [ ] Inter-zone rules (6 valores).
 - [ ] Report (4 valores).
+
+## Introdução
+Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os firewalls assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de firewalls de alta disponibilidade utilizando a plataforma VyOS. O VyOS é uma solução de código aberto reconhecida pela sua flexibilidade e recursos avançados de segurança. Focar-nos-emos na configuração de firewalls redundantes e na distribuição de carga de tráfego, com o propósito de garantir a disponibilidade contínua dos serviços de rede. Adicionalmente, iremos analisar a implementação de funcionalidades como o conntrack-sync, que permite a sincronização de estados de conexão entre os dispositivos de firewall, potenciando ainda mais a resiliência da infraestrutura de segurança. 
 
 ## Estado-de-Arte
 
