@@ -189,11 +189,43 @@ commit
 save
 ```
 
-LB1B (*load balancer* inferior interno):
+LB1B (*load balancer* Superior externo):
 ```cli
-set load-balancing wan interface-health eth1 next-hop 10.0.5.2
+set load-balancing wan interface-health eth1 next-hop 10.0.5.1
 set load-balancing wan interface-health eth2 next-hop 10.0.2.13
 set load-balancing wan interface-health eth3 next-hop 10.0.3.1
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 eth1 weight 1
+set load-balancing wan rule 1 eth2 weight 1
+set load-balancing wan rule 1 eth3 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
+
+commit
+save
+```
+
+LB2A (*load balancer* inferior externo):
+```cli
+set load-balancing wan interface-health eth1 next-hop 10.0.4.1
+set load-balancing wan interface-health eth2 next-hop 10.0.8.1
+set load-balancing wan interface-health eth3 next-hop 10.4.1.2
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 eth1 weight 1
+set load-balancing wan rule 1 eth2 weight 1
+set load-balancing wan rule 1 eth3 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
+
+commit
+save
+```
+
+LB2B (*load balancer* inferior interno):
+```cli
+set load-balancing wan interface-health eth1 next-hop 10.0.7.1
+set load-balancing wan interface-health eth2 next-hop 10.0.3.1
+set load-balancing wan interface-health eth3 next-hop 10.4.1.1
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 eth1 weight 1
 set load-balancing wan rule 1 eth2 weight 1
