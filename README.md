@@ -63,8 +63,8 @@ save
 R1 (*router* interno):
 ```cli
 conf t 
-ip route 0.0.0.0 0.0.0.0 (ip por definir)
-ip route 0.0.0.0 0.0.0.0 (ip por definir)
+ip route 0.0.0.0 0.0.0.0 10.1.1.11
+ip route 0.0.0.0 0.0.0.0 10.1.1.12
 int f0/1
 ip add 10.2.2.10 255.255.255.0
 no shut
@@ -75,11 +75,14 @@ end
 write
 ```
 
+IP NAT: 192.1.0.0/23
+Mascara do IP NAT: 255.255.254.0 
+
 R2 (*router* externo):
 ```cli
 conf t
-ip route 192.1.0.0 255.255.254.0 (ip por definir)
-ip route 192.1.0.0 255.255.254.0 (ip por definir)
+ip route 192.1.0.0 255.255.254.0 200.1.1.11
+ip route 192.1.0.0 255.255.254.0 200.1.1.11
 int f0/1
 ip add 200.2.2.10 255.255.255.0
 no shut
@@ -93,10 +96,10 @@ write
 LB1A (*load balancer* superior interno):
 ```cli
 set system host-name LB1A
-set interfaces ethernet eth0 address (ip por definir)
-set interfaces ethernet eth1 address (ip por definir)
-set interfaces ethernet eth2 address (ip por definir)
-set interfaces ethernet eth3 address (ip por definir)
+set interfaces ethernet eth0 address 10.1.1.11/24
+set interfaces ethernet eth1 address 10.0.1.11/24
+set interfaces ethernet eth2 address 10.0.6.1/24
+set interfaces ethernet eth3 address 10.3.1.1/24
 commit
 save
 ```
@@ -104,10 +107,10 @@ save
 LB1B (*load balancer* inferior interno):
 ```cli
 set system host-name LB1B
-set interfaces ethernet eth0 address (ip por definir)
-set interfaces ethernet eth1 address (ip por definir)
-set interfaces ethernet eth2 address (ip por definir)
-set interfaces ethernet eth3 address (ip por definir)
+set interfaces ethernet eth0 address 10.1.1.12/24
+set interfaces ethernet eth1 address 10.0.5.1/24
+set interfaces ethernet eth2 address 10.0.2.12/24
+set interfaces ethernet eth3 address 10.3.1.2/24
 commit
 save
 ```
@@ -115,10 +118,10 @@ save
 FW1 (*firewall* superior):
 ```cli
 set system host-name FW1
-set interfaces ethernet eth0 address (ip por definir)
-set interfaces ethernet eth1 address (ip por definir)
-set interfaces ethernet eth2 address (ip por definir)
-set interfaces ethernet eth3 address (ip por definir)
+set interfaces ethernet eth0 address 10.0.1.12/24
+set interfaces ethernet eth1 address 10.0.5.2/24
+set interfaces ethernet eth2 address 10.0.4.1/24
+set interfaces ethernet eth3 address 10.0.7.1/24
 
 set nat source outbound-interface eth0
 set nat source rule 10 source address 10.0.0.0/8
@@ -131,10 +134,10 @@ save
 FW2 (*firewall* inferior):
 ```cli
 set system host-name FW2
-set interfaces ethernet eth0 address (ip por definir)
-set interfaces ethernet eth1 address (ip por definir)
-set interfaces ethernet eth2 address (ip por definir)
-set interfaces ethernet eth3 address (ip por definir)
+set interfaces ethernet eth0 address 10.0.6.2/24
+set interfaces ethernet eth1 address 10.0.2.13/24
+set interfaces ethernet eth2 address 10.0.8.1/24
+set interfaces ethernet eth3 address 10.0.3.1/24
 
 set nat source outbound-interface eth0
 set nat source rule 10 source address 10.0.0.0/8
@@ -147,10 +150,10 @@ save
 LB2A (*load balancer* superior externo):
 ```cli
 set system host-name LB2A
-set interfaces ethernet eth0 address (ip por definir)
-set interfaces ethernet eth1 address (ip por definir)
-set interfaces ethernet eth2 address (ip por definir)
-set interfaces ethernet eth3 address (ip por definir)
+set interfaces ethernet eth0 address 200.1.1.11/24
+set interfaces ethernet eth1 address 10.0.4.2/24
+set interfaces ethernet eth2 address 10.0.8.2/24
+set interfaces ethernet eth3 address 10.4.1.1/24
 
 commit
 save
@@ -159,10 +162,10 @@ save
 LB2B (*load balancer* inferior externo):
 ```cli
 set system host-name LB2B
-set interfaces ethernet eth0 address (ip por definir)
-set interfaces ethernet eth1 address (ip por definir)
-set interfaces ethernet eth2 address (ip por definir)
-set interfaces ethernet eth3 address (ip por definir)
+set interfaces ethernet eth0 address 200.1.1.12/24
+set interfaces ethernet eth1 address 10.0.7.2/24
+set interfaces ethernet eth2 address 10.0.3.2/24
+set interfaces ethernet eth3 address 10.4.1.2/24
 
 commit
 save
