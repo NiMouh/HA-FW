@@ -13,7 +13,7 @@
   - Zonas e Regras;
 - Questões Finais;
 - Testes de Funcionamento (Ana e Simão)
-- Conclusão (ChatGPT)
+- Conclusão;
 
 ## Objetivo
 Apresentar um relatório dos **testes de configuração** e de **funcionamento** dos cenários descritos nos pontos `9` e `10` do guia laboratorial “High-Availability Firewall Scenarios”.
