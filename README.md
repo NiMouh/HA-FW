@@ -7,8 +7,8 @@
 ## Estrutura do Relatório
 - Introdução (ChatGPT)
 - Estado-de-Arte (Simão)
-- Rotas de Rede e conectividade (Ana)
-- Load-Balancers (Simão e Ana)
+- Rotas de Rede e conectividade;
+- Load-Balancers;
 - Configuração da Firewall:
   - Zonas e Regras (Ana e Simão);
 - Questões Finais (Ana e Simão)
@@ -21,7 +21,7 @@ Apresentar um relatório dos **testes de configuração** e de **funcionamento**
 Temos as seguintes tarefas a serem realizadas:
 
 - [ ] Firewall and load-balancers deployment (2 valores).
-- [ ] Network routing and connectivity (2 valores).
+- [x] Network routing and connectivity (2 valores).
 - [ ] Devices state synchronization (3 valores).
 - [ ] Zones definition (3 valores).
 - [ ] Inter-zone rules (6 valores).
