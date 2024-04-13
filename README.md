@@ -10,8 +10,8 @@
 - Rotas de Rede e conectividade;
 - Load-Balancers;
 - Configuração da Firewall:
-  - Zonas e Regras (Ana e Simão);
-- Questões Finais (Ana e Simão)
+  - Zonas e Regras;
+- Questões Finais;
 - Testes de Funcionamento (Ana e Simão)
 - Conclusão (ChatGPT)
 
@@ -265,6 +265,12 @@ set zone-policy zone INSIDE description "Inside (Internal Network)"
 set zone-policy zone INSIDE interface eth0
 set zone-policy zone INSIDE interface eth1
 ```
+Definição de Zona Outside:
+```cli
+set zone-policy zone OUTSIDE description "Outside (External Network)"
+set zone-policy zone OUTSIDE interface eth2
+set zone-policy zone OUTSIDE interface eth3
+```
 
 ### Regras entre Zonas
 
@@ -272,7 +278,11 @@ Listagem de regras entre zonas:
 1. Permitir qualquer tráfego de saída do INSIDE para o OUTSIDE;
 2. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados do INSIDE;
 3. Bloquear pacotes ICMP do OUTSIDE para o INSIDE;
-4. (Por fazer mais regras)
+4. Permitir tráfego de entrada do OUTSIDE para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS);
+5. Bloquear qualquer tráfego de entrada do OUTSIDE para o INSIDE nas portas não autorizadas;
+**Só depois de implementar o DMZ**
+5. Permitir tráfego de saída do INSIDE para um servidor específico no DMZ na porta 443 (HTTPS);
+6. Permitir tráfego de entrada do DMZ para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS);
 
 ### Questões finais
 
