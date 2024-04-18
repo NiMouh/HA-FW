@@ -144,9 +144,9 @@ set interfaces ethernet eth3 address 10.0.7.1/24
 set protocols static route 10.2.2.0/24 next-hop 10.0.1.11 # LB1A
 set protocols static route 0.0.0.0/0 next-hop 10.0.4.2 # LB2A
 
-set nat source outbound-interface eth0
+set nat source outbound-interface eth2
 set nat source rule 10 source address 10.2.2.0/24
-set nat nat source rule 100 translation address 192.1.0.1-192.1.0.10
+set nat nat source rule 10 translation address 192.1.0.1-192.1.0.15
 
 commit
 save
@@ -164,9 +164,9 @@ set interfaces ethernet eth3 address 10.0.3.1/24
 set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
 set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
 
-set nat source outbound-interface eth0
+set nat source outbound-interface eth3
 set nat source rule 10 source address 10.2.2.0/24
-set nat nat source rule 100 translation address 192.1.0.1-192.1.0.15
+set nat nat source rule 10 translation address 192.1.0.1-192.1.0.15
 
 commit
 save
