@@ -49,25 +49,26 @@ Explicar os seguintes conceitos:
 
 ### Rotas e Conectividade da Rede
 
+TODO: Definir rotas estáticas nas firewalls e load balancers.
+
 Vamos começar por atribuir os endereços IP às interfaces dos routers e aos computadores de acordo com o enunciado.
 
 PC1 (computador interno):
-```
+```sql
 ip 10.2.2.100/24 10.2.2.10
 save
 ```
 
 PC2 (computador externo):
-```
+```sql
 ip 200.2.2.100/24 200.2.2.10
 save
 ```
 
 R1 (*router* interno):
-```cli
+```sql
 conf t 
 ip route 0.0.0.0 0.0.0.0 10.1.1.11
-ip route 0.0.0.0 0.0.0.0 10.1.1.12
 int f0/1
 ip add 10.2.2.10 255.255.255.0
 no shut
@@ -82,44 +83,46 @@ IP NAT: 192.1.0.0/23
 Mascara do IP NAT: 255.255.254.0 
 
 R2 (*router* externo):
-```cli
+```sql
 conf t
-ip route 192.1.0.0 255.255.254.0 200.1.1.11
-ip route 192.1.0.0 255.255.254.0 200.1.1.11
+ip route 192.1.0.0 255.255.254.0 200.1.1.12
 int f0/1
 ip add 200.2.2.10 255.255.255.0
 no shut
 int f0/0
 ip add 200.1.1.10 255.255.255.0
 no shut
+
 end
 write
 ```
 
 LB1A (*load balancer* superior interno):
-```cli
+```sql
 set system host-name LB1A
 set interfaces ethernet eth0 address 10.1.1.11/24
 set interfaces ethernet eth1 address 10.0.1.11/24
 set interfaces ethernet eth2 address 10.0.6.1/24
 set interfaces ethernet eth3 address 10.3.1.1/24
+
 commit
 save
 ```
 
 LB1B (*load balancer* inferior interno):
-```cli
+```sql
 set system host-name LB1B
 set interfaces ethernet eth0 address 10.1.1.12/24
 set interfaces ethernet eth1 address 10.0.5.1/24
 set interfaces ethernet eth2 address 10.0.2.12/24
 set interfaces ethernet eth3 address 10.3.1.2/24
+
 commit
 save
 ```
 
 FW1 (*firewall* superior):
-```cli
+```sql
 set system host-name FW1
 set interfaces ethernet eth0 address 10.0.1.12/24
 set interfaces ethernet eth1 address 10.0.5.2/24
@@ -135,7 +138,7 @@ save
 ```
 
 FW2 (*firewall* inferior):
-```cli
+```sql
 set system host-name FW2
 set interfaces ethernet eth0 address 10.0.6.2/24
 set interfaces ethernet eth1 address 10.0.2.13/24
@@ -144,14 +147,14 @@ set interfaces ethernet eth3 address 10.0.3.1/24
 
 set nat source outbound-interface eth0
 set nat source rule 10 source address 10.0.0.0/8
-set nat nat source rule 100 translation address 192.1.0.1-192.1.0.10
+set nat nat source rule 100 translation address 192.1.0.1-192.1.0.15
 
 commit
 save
 ```
 
 LB2A (*load balancer* superior externo):
-```cli
+```sql
 set system host-name LB2A
 set interfaces ethernet eth0 address 200.1.1.11/24
 set interfaces ethernet eth1 address 10.0.4.2/24
@@ -163,7 +166,7 @@ save
 ```
 
 LB2B (*load balancer* inferior externo):
-```cli
+```sql
 set system host-name LB2B
 set interfaces ethernet eth0 address 200.1.1.12/24
 set interfaces ethernet eth1 address 10.0.7.2/24
@@ -177,14 +180,12 @@ save
 ### Load-Balancers
 
 LB1A (*load balancer* superior interno):
-```cli
+```sql
 set load-balancing wan interface-health eth1 next-hop 10.0.1.12
 set load-balancing wan interface-health eth2 next-hop 10.0.6.2
-set load-balancing wan interface-health eth3 next-hop 10.3.1.2
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 eth1 weight 1
 set load-balancing wan rule 1 eth2 weight 1
-set load-balancing wan rule 1 eth3 weight 1
 set load-balancing wan sticky-connections inbound
 set load-balancing wan disable-source-nat
 
@@ -193,14 +194,12 @@ save
 ```
 
 LB1B (*load balancer* Superior externo):
-```cli
+```sql
 set load-balancing wan interface-health eth1 next-hop 10.0.5.1
 set load-balancing wan interface-health eth2 next-hop 10.0.2.13
-set load-balancing wan interface-health eth3 next-hop 10.0.3.1
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 eth1 weight 1
 set load-balancing wan rule 1 eth2 weight 1
-set load-balancing wan rule 1 eth3 weight 1
 set load-balancing wan sticky-connections inbound
 set load-balancing wan disable-source-nat
 
@@ -209,14 +208,12 @@ save
 ```
 
 LB2A (*load balancer* inferior externo):
-```cli
+```sql
 set load-balancing wan interface-health eth1 next-hop 10.0.4.1
 set load-balancing wan interface-health eth2 next-hop 10.0.8.1
-set load-balancing wan interface-health eth3 next-hop 10.4.1.2
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 eth1 weight 1
 set load-balancing wan rule 1 eth2 weight 1
-set load-balancing wan rule 1 eth3 weight 1
 set load-balancing wan sticky-connections inbound
 set load-balancing wan disable-source-nat
 
@@ -225,14 +222,12 @@ save
 ```
 
 LB2B (*load balancer* inferior interno):
-```cli
+```sql
 set load-balancing wan interface-health eth1 next-hop 10.0.7.1
 set load-balancing wan interface-health eth2 next-hop 10.0.3.1
-set load-balancing wan interface-health eth3 next-hop 10.4.1.1
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 eth1 weight 1
 set load-balancing wan rule 1 eth2 weight 1
-set load-balancing wan rule 1 eth3 weight 1
 set load-balancing wan sticky-connections inbound
 set load-balancing wan disable-source-nat
 
@@ -242,34 +237,53 @@ save
 
 ### Sincronização de Estados (*State Synchronization*)
 
-VRRP no LB1A e LB1B:
-```cli
+VRRP nos Load-Balancers internos:
+```sql
 set high-availability vrrp group LBCluster1 vrid 10
 set high-availability vrrp group LBCluster1 interface eth5
-set high-availability vrrp group LBCluster1 virtual-address 192.168.101.1/24
+set high-availability vrrp group LBCluster1 virtual-address 192.168.100.1/24
 set high-availability vrrp sync-group LBCluster1 member LBCluster1
 set high-availability vrrp group LBCluster1 rfc3768-compatibility
 ```
 
-conntrack-sync no LB1A e LB1B:
-```cli
+VRRP nos Load-Balancers externos:
+```sql
+set high-availability vrrp group LBCluster2 vrid 10
+set high-availability vrrp group LBCluster2 interface eth5
+set high-availability vrrp group LBCluster2 virtual-address 192.168.100.2/24
+set high-availability vrrp sync-group LBCluster2 member LBCluster2
+set high-availability vrrp group LBCluster2 rfc3768-compatibility
+```
+
+conntrack-sync nos Load-Balancers internos:
+```sql
 set service conntrack-sync accept-protocol 'tcp,udp,icmp'
 set service conntrack-sync failover-mechanism vrrp sync-group LBCluster1
 set service conntrack-sync interface eth5
-set service conntrack-sync mcast-group 225.0.0.51
+set service conntrack-sync mcast-group 225.0.0.50
 set service conntrack-sync disable-external-cache
 ```
+
+conntrack-sync nos Load-Balancers externos:
+```sql
+set service conntrack-sync accept-protocol 'tcp,udp,icmp'
+set service conntrack-sync failover-mechanism vrrp sync-group LBCluster2
+set service conntrack-sync interface eth5
+set service conntrack-sync mcast-group 225.0.0.50
+set service conntrack-sync disable-external-cache
+```
+
 
 ### Definição de Zonas
 
 Definição de Zona Inside:
-```cli
+```sql
 set zone-policy zone INSIDE description "Inside (Internal Network)"
 set zone-policy zone INSIDE interface eth0
 set zone-policy zone INSIDE interface eth1
 ```
 Definição de Zona Outside:
-```cli
+```sql
 set zone-policy zone OUTSIDE description "Outside (External Network)"
 set zone-policy zone OUTSIDE interface eth2
 set zone-policy zone OUTSIDE interface eth3
@@ -290,7 +304,7 @@ Listagem de regras entre zonas:
 
 
 #### Regra 1
-```cli
+```sql
 set firewall name INSIDE-OUTSIDE rule 1 action accept
 set firewall name INSIDE-OUTSIDE rule 1 source zone INSIDE
 set firewall name INSIDE-OUTSIDE rule 1 destination zone OUTSIDE
@@ -303,7 +317,7 @@ save
 
 #### Regra 2
 
-```cli
+```sql
 set firewall name INSIDE-OUTSIDE rule 2 action accept
 set firewall name INSIDE-OUTSIDE rule 2 source zone INSIDE
 set firewall name INSIDE-OUTSIDE rule 2 destination zone OUTSIDE
@@ -312,7 +326,7 @@ set firewall name INSIDE-OUTSIDE rule 2 state related enable
 
 #### Regra 3 (ip privado: 10.1.1.0/24)
 
-```cli
+```sql
 set firewall name OUTSIDE-INSIDE rule 2 action drop
 set firewall name OUTSIDE-INSIDE rule 2 source zone OUTSIDE
 set firewall name OUTSIDE-INSIDE rule 2 destination address 10.1.1.0/24
@@ -320,7 +334,7 @@ set firewall name OUTSIDE-INSIDE rule 2 destination address 10.1.1.0/24
 
 #### Regra 4
 
-```cli
+```sql
 set firewall name OUTSIDE-INSIDE rule 3 action drop
 set firewall name OUTSIDE-INSIDE rule 3 source zone OUTSIDE
 set firewall name OUTSIDE-INSIDE rule 3 destination zone INSIDE
