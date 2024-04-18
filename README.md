@@ -86,7 +86,7 @@ Mascara do IP NAT: 255.255.254.0
 R2 (*router* externo):
 ```sql
 conf t
-ip route 192.1.0.0 255.255.254.0 200.1.1.12 # LB2B
+ip route 0.0.0.0 0.0.0.0 200.1.1.12 # LB2B
 int f0/1
 ip add 200.2.2.10 255.255.255.0
 no shut
