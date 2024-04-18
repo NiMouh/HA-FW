@@ -5,17 +5,19 @@
 - Simão Andrade (118345)
 
 ## Estrutura do Relatório
-- Introdução;
-- Estado-de-Arte (Simão)
-- Rotas de Rede e conectividade;
-- Load-Balancers;
-- Configuração da Firewall:
-  - Zonas e Regras;
-- Questões Finais;
-- Testes de Funcionamento (Ana e Simão)
-- Conclusão;
+
+1. Introdução;
+2. Estado-de-Arte (Simão)
+3. Rotas de Rede e conectividade;
+4. Load-Balancers;
+5. Configuração da Firewall:
+   1. Zonas e Regras;
+6. Questões Finais;
+7. Testes de Funcionamento (Ana e Simão)
+8. Conclusão;
 
 ## Objetivo
+
 Apresentar um relatório dos **testes de configuração** e de **funcionamento** dos cenários descritos nos pontos `9` e `10` do guia laboratorial “High-Availability Firewall Scenarios”.
 
 Temos as seguintes tarefas a serem realizadas:
@@ -28,6 +30,7 @@ Temos as seguintes tarefas a serem realizadas:
 - [ ] Report (4 valores).
 
 ## Introdução
+
 Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os firewalls assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de firewalls de alta disponibilidade utilizando a plataforma VyOS. O VyOS é uma solução de código aberto reconhecida pela sua flexibilidade e recursos avançados de segurança. Focar-nos-emos na configuração de firewalls redundantes e na distribuição de carga de tráfego, com o propósito de garantir a disponibilidade contínua dos serviços de rede. Adicionalmente, iremos analisar a implementação de funcionalidades como o conntrack-sync, que permite a sincronização de estados de conexão entre os dispositivos de firewall, potenciando ainda mais a resiliência da infraestrutura de segurança. 
 
 ## Estado-de-Arte
@@ -47,9 +50,7 @@ Explicar os seguintes conceitos:
   <img src="image.png" alt="Topologia" width="1000"/>
 </p>
 
-### Rotas e Conectividade da Rede
-
-TODO: Definir rotas estáticas nas firewalls e load balancers.
+### Rotas Estáticas e Conectividade da Rede
 
 Vamos começar por atribuir os endereços IP às interfaces dos routers e aos computadores de acordo com o enunciado.
 
@@ -68,7 +69,7 @@ save
 R1 (*router* interno):
 ```sql
 conf t 
-ip route 0.0.0.0 0.0.0.0 10.1.1.11
+ip route 0.0.0.0 0.0.0.0 10.1.1.11 # LB1A
 int f0/1
 ip add 10.2.2.10 255.255.255.0
 no shut
@@ -85,7 +86,7 @@ Mascara do IP NAT: 255.255.254.0
 R2 (*router* externo):
 ```sql
 conf t
-ip route 192.1.0.0 255.255.254.0 200.1.1.12
+ip route 192.1.0.0 255.255.254.0 200.1.1.12 # LB2B
 int f0/1
 ip add 200.2.2.10 255.255.255.0
 no shut
@@ -105,6 +106,11 @@ set interfaces ethernet eth1 address 10.0.1.11/24
 set interfaces ethernet eth2 address 10.0.6.1/24
 set interfaces ethernet eth3 address 10.3.1.1/24
 
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
+set protocols static route 0.0.0.0/0 next-hop 10.0.1.12 # FW1
+set protocols static route 0.0.0.0/0 next-hop 10.0.6.2 # FW2
+
 commit
 save
 ```
@@ -117,6 +123,11 @@ set interfaces ethernet eth1 address 10.0.5.1/24
 set interfaces ethernet eth2 address 10.0.2.12/24
 set interfaces ethernet eth3 address 10.3.1.2/24
 
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
+set protocols static route 0.0.0.0/0 next-hop 10.0.5.2 # FW1
+set protocols static route 0.0.0.0/0 next-hop 10.0.2.13 # FW2
+
 commit
 save
 ```
@@ -128,6 +139,10 @@ set interfaces ethernet eth0 address 10.0.1.12/24
 set interfaces ethernet eth1 address 10.0.5.2/24
 set interfaces ethernet eth2 address 10.0.4.1/24
 set interfaces ethernet eth3 address 10.0.7.1/24
+
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.0.1.11 # LB1A
+set protocols static route 0.0.0.0/0 next-hop 10.0.4.2 # LB2A
 
 set nat source outbound-interface eth0
 set nat source rule 10 source address 10.0.0.0/8
@@ -145,6 +160,10 @@ set interfaces ethernet eth1 address 10.0.2.13/24
 set interfaces ethernet eth2 address 10.0.8.1/24
 set interfaces ethernet eth3 address 10.0.3.1/24
 
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
+set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
+
 set nat source outbound-interface eth0
 set nat source rule 10 source address 10.0.0.0/8
 set nat nat source rule 100 translation address 192.1.0.1-192.1.0.15
@@ -161,6 +180,11 @@ set interfaces ethernet eth1 address 10.0.4.2/24
 set interfaces ethernet eth2 address 10.0.8.2/24
 set interfaces ethernet eth3 address 10.4.1.1/24
 
+# Rotas Estáticas
+set protocols static route 0.0.0.0/0 next-hop 200.1.1.10 # R2
+set protocols static route 192.1.0.0/28 next-hop 10.0.8.1 # FW2
+set protocols static route 192.1.0.0/28 next-hop 10.0.4.1 # FW1
+
 commit
 save
 ```
@@ -172,6 +196,11 @@ set interfaces ethernet eth0 address 200.1.1.12/24
 set interfaces ethernet eth1 address 10.0.7.2/24
 set interfaces ethernet eth2 address 10.0.3.2/24
 set interfaces ethernet eth3 address 10.4.1.2/24
+
+# Rotas Estáticas
+set protocols static route 0.0.0.0/0 next-hop 200.1.1.10 # R2
+set protocols static route 192.1.0.0/28 next-hop 10.0.3.1 # FW2
+set protocols static route 192.1.0.0/28 next-hop 10.0.7.1 # FW1
 
 commit
 save
@@ -342,7 +371,7 @@ set firewall name OUTSIDE-INSIDE rule 3 protocol icmp
 ```
 
 #### Regra 4
-```cli
+```sql
 set firewall name OUTSIDE-TO-INSIDE rule 10 action accept
 set firewall name OUTSIDE-TO-INSIDE rule 10 protocol tcp
 set firewall name OUTSIDE-TO-INSIDE rule 10 destination port 80
@@ -353,12 +382,12 @@ set firewall name OUTSIDE-TO-INSIDE default-action drop
 ```
 
 #### Regra 5
-```cli
+```sql
 set firewall name OUTSIDE-TO-INSIDE rule 30 action drop
 ```
 
 #### Regra 6
-```cli
+```sql
 set firewall name INSIDE-TO-DMZ rule 10 action accept
 set firewall name INSIDE-TO-DMZ rule 10 protocol tcp
 set firewall name INSIDE-TO-DMZ rule 10 destination address <endereço_do_servidor_DMZ>
@@ -367,7 +396,7 @@ set firewall name INSIDE-TO-DMZ default-action drop
 ```
 
 #### Regra 7
-```cli
+```sql
 set firewall name DMZ-TO-INSIDE rule 10 action accept
 set firewall name DMZ-TO-INSIDE rule 10 protocol tcp
 set firewall name DMZ-TO-INSIDE rule 10 destination port 80
@@ -381,14 +410,14 @@ set firewall name DMZ-TO-INSIDE default-action drop
 
 1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.
 
-R: A sincronização feita nos load balancers permite que os pedidos do cliente atinjam sempre o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
-
-Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
+  R: A sincronização feita nos load balancers permite que os pedidos do cliente atinjam sempre o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
+  
+  Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
 
 2. Which load balancing algorithm may also allow the nonexistence of load-balancers synchronization?
    R: Using IP Hash LB algorithms doesn't require routing history synchronization (between LB). Using other LB algorithms, they must share routing history.
 4. Explain why device/connection states synchronization may be detrimental during a DDoS attack
-   R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na detecção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
+   R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na deteção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
 
 ## Ponto 10 (Ainda não chegámos aqui)
 
