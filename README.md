@@ -22,9 +22,9 @@ Apresentar um relatório dos **testes de configuração** e de **funcionamento**
 
 Temos as seguintes tarefas a serem realizadas:
 
-- [ ] Firewall and load-balancers deployment (2 valores).
+- [x] Firewall and load-balancers deployment (2 valores).
 - [x] Network routing and connectivity (2 valores).
-- [ ] Devices state synchronization (3 valores).
+- [x] Devices state synchronization (3 valores).
 - [ ] Zones definition (3 valores).
 - [ ] Inter-zone rules (6 valores).
 - [ ] Report (4 valores).
@@ -313,11 +313,16 @@ set zone-policy zone INSIDE description "Inside (Internal Network)"
 set zone-policy zone INSIDE interface eth0
 set zone-policy zone INSIDE interface eth1
 ```
+
 Definição de Zona Outside:
 ```sql
 set zone-policy zone OUTSIDE description "Outside (External Network)"
 set zone-policy zone OUTSIDE interface eth2
 set zone-policy zone OUTSIDE interface eth3
+```
+
+Definição de Zona DMZ (POR FAZER):
+```sql
 ```
 
 ### Regras entre Zonas
@@ -424,6 +429,7 @@ set firewall name DMZ-TO-INSIDE default-action drop
 ## Ponto 10 (Ainda não chegámos aqui)
 
 ## Conclusão
+
 Em síntese, a implementação de firewalls de alta disponibilidade é de suma importância para garantir a continuidade operacional e a segurança das redes empresariais. Através da plataforma VyOS, foram explorados diversos cenários de configuração com o intuito de maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar quatro load balancers, onde dois deles estão sincronizados entre si, e distribuir de forma equilibrada o tráfego entre eles, foi possível mitigar falhas de hardware e assegurar uma proteção contínua contra ameaças cibernéticas. Adicionalmente, a integração do conntrack-sync nos load balancers permitiu uma sincronização eficiente dos estados de conexão, contribuindo para uma resposta mais eficaz e robusta da infraestrutura de segurança.
 
 Por outro lado, ao conectar as duas firewalls aos load balancers, estabeleceu-se um ambiente de alta disponibilidade com redundância, onde cada firewall atua como um gateway seguro entre as duas zonas da rede: a outside e a inside. A utilização de rotas estáticas sincronizadas entre os load balancers garantiu uma distribuição eficiente da carga de trabalho e uma alta disponibilidade dos serviços em ambas as zonas.
