@@ -162,7 +162,7 @@ set interfaces ethernet eth2 address 10.0.8.1/24
 set interfaces ethernet eth3 address 10.0.3.1/24
 
 # Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
+set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
 set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
 
 # NAT Translation
