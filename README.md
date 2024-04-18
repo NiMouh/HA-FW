@@ -74,7 +74,7 @@ int f0/1
 ip add 10.2.2.10 255.255.255.0
 no shut
 int f0/0
-ip add 10.1.1.10/24
+ip add 10.1.1.10 255.255.255.0
 no shut
 end
 write
