@@ -108,8 +108,6 @@ set interfaces ethernet eth3 address 10.3.1.1/24
 
 # Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
-set protocols static route 0.0.0.0/0 next-hop 10.0.1.12 # FW1
-set protocols static route 0.0.0.0/0 next-hop 10.0.6.2 # FW2
 
 commit
 save
@@ -125,8 +123,6 @@ set interfaces ethernet eth3 address 10.3.1.2/24
 
 # Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
-set protocols static route 0.0.0.0/0 next-hop 10.0.5.2 # FW1
-set protocols static route 0.0.0.0/0 next-hop 10.0.2.13 # FW2
 
 commit
 save
@@ -142,11 +138,14 @@ set interfaces ethernet eth3 address 10.0.7.1/24
 
 # Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.0.1.11 # LB1A
+set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
 set protocols static route 0.0.0.0/0 next-hop 10.0.4.2 # LB2A
+set protocols static route 0.0.0.0/0 next-hop 10.0.7.2 # LB2B
 
 # NAT Translation
 set nat source rule 10 outbound-interface eth2
-set nat source rule 10 source address 10.2.2.0/24
+set nat source rule 10 outbound-interface eth3
+set nat source rule 10 source address 10.0.0.0/8
 set nat source rule 10 translation address 192.1.0.1-192.1.0.15
 
 commit
@@ -163,11 +162,14 @@ set interfaces ethernet eth3 address 10.0.3.1/24
 
 # Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
+set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
 set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
+set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
 
 # NAT Translation
+set nat source rule 10 outbound-interface eth2
 set nat source rule 10 outbound-interface eth3
-set nat source rule 10 source address 10.2.2.0/24
+set nat source rule 10 source address 10.0.0.0/8
 set nat source rule 10 translation address 192.1.0.16-192.1.0.31
 
 commit
@@ -183,9 +185,7 @@ set interfaces ethernet eth2 address 10.0.8.2/24
 set interfaces ethernet eth3 address 10.4.1.1/24
 
 # Rotas Estáticas
-set protocols static route 0.0.0.0/0 next-hop 200.1.1.10 # R2
-set protocols static route 192.1.0.0/28 next-hop 10.0.8.1 # FW2
-set protocols static route 192.1.0.0/28 next-hop 10.0.4.1 # FW1
+set protocols static route 200.2.2.0/24 next-hop 200.1.1.10 # R2
 
 commit
 save
@@ -200,9 +200,7 @@ set interfaces ethernet eth2 address 10.0.3.2/24
 set interfaces ethernet eth3 address 10.4.1.2/24
 
 # Rotas Estáticas
-set protocols static route 0.0.0.0/0 next-hop 200.1.1.10 # R2
-set protocols static route 192.1.0.0/28 next-hop 10.0.3.1 # FW2
-set protocols static route 192.1.0.0/28 next-hop 10.0.7.1 # FW1
+set protocols static route 200.2.2.0/24 next-hop 200.1.1.10 # R2
 
 commit
 save
@@ -226,7 +224,7 @@ save
 
 LB1B (*load balancer* Superior externo):
 ```sql
-set load-balancing wan interface-health eth1 nexthop 10.0.5.1
+set load-balancing wan interface-health eth1 nexthop 10.0.5.2
 set load-balancing wan interface-health eth2 nexthop 10.0.2.13
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 interface eth1 weight 1
