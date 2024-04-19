@@ -410,7 +410,6 @@ set firewall name DMZ-TO-INSIDE rule 20 protocol tcp
 set firewall name DMZ-TO-INSIDE rule 20 destination port 443
 set firewall name DMZ-TO-INSIDE default-action drop
 ```
-
 ### Questões finais
 
 1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.
@@ -424,8 +423,21 @@ set firewall name DMZ-TO-INSIDE default-action drop
 4. Explain why device/connection states synchronization may be detrimental during a DDoS attack
    R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na deteção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
 
-## Ponto 10 (Ainda não chegámos aqui)
+## Ponto 10 
+### Load-Balancer 3
+LB3 (*load balancer* DMZ):
+```sql
+set load-balancing wan interface-health eth0 nexthop 10.0.9.1
+set load-balancing wan interface-health eth1 nexthop 10.0.10.1
+set load-balancing wan rule 1 inbound-interface eth2
+set load-balancing wan rule 1 interface eth0 weight 1
+set load-balancing wan rule 1 interface eth1 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
 
+commit
+save
+```
 ## Conclusão
 
 Em síntese, a implementação de firewalls de alta disponibilidade é de suma importância para garantir a continuidade operacional e a segurança das redes empresariais. Através da plataforma VyOS, foram explorados diversos cenários de configuração com o intuito de maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar quatro load balancers, onde dois deles estão sincronizados entre si, e distribuir de forma equilibrada o tráfego entre eles, foi possível mitigar falhas de hardware e assegurar uma proteção contínua contra ameaças cibernéticas. Adicionalmente, a integração do conntrack-sync nos load balancers permitiu uma sincronização eficiente dos estados de conexão, contribuindo para uma resposta mais eficaz e robusta da infraestrutura de segurança.
