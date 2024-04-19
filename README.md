@@ -423,9 +423,19 @@ set firewall name DMZ-TO-INSIDE default-action drop
 4. Explain why device/connection states synchronization may be detrimental during a DDoS attack
    R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na deteção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
 
-## Ponto 10 
-### Load-Balancer 3
+## Ponto 10 (corrigir POR MIM)
 LB3 (*load balancer* DMZ):
+```sql
+set interfaces ethernet eth0 address 10.1.1.11/24
+set interfaces ethernet eth1 address 10.0.1.11/24
+set interfaces ethernet eth2 address 10.0.6.1/24
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
+
+commit
+save
+```
+
 ```sql
 set load-balancing wan interface-health eth0 nexthop 10.0.9.1
 set load-balancing wan interface-health eth1 nexthop 10.0.10.1
@@ -438,6 +448,25 @@ set load-balancing wan disable-source-nat
 commit
 save
 ```
+FW1 (*firewall* superior):
+```sql
+set interfaces ethernet eth4 address 10.0.10.1/24
+
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
+set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
+set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
+set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
+
+FW2 (*firewall* inferior):
+```sql
+set interfaces ethernet eth4 address 10.0.9.1/24
+
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
+set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
+set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
+set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
 ## Conclusão
 
 Em síntese, a implementação de firewalls de alta disponibilidade é de suma importância para garantir a continuidade operacional e a segurança das redes empresariais. Através da plataforma VyOS, foram explorados diversos cenários de configuração com o intuito de maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar quatro load balancers, onde dois deles estão sincronizados entre si, e distribuir de forma equilibrada o tráfego entre eles, foi possível mitigar falhas de hardware e assegurar uma proteção contínua contra ameaças cibernéticas. Adicionalmente, a integração do conntrack-sync nos load balancers permitiu uma sincronização eficiente dos estados de conexão, contribuindo para uma resposta mais eficaz e robusta da infraestrutura de segurança.
