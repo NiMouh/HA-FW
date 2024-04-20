@@ -372,92 +372,126 @@ commit
 save
 ```
 
-### Regras entre Zonas (Ideia: Alterar as regras para ter 'PERMITTED' e 'RESTRICTED' apenas)
+### Descrição da Configuração
 
-Listagem de regras entre zonas:
-1. Permitir qualquer tráfego de saída do INSIDE para o OUTSIDE;
-2. Permite o tráfego já estabelecido pelo INSIDE para o OUTSIDE;
-3. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados (ip privado: 10.1.1.0/24);
-4. Bloquear pacotes ICMP do OUTSIDE para o INSIDE;
-5. Permitir tráfego de entrada do OUTSIDE para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
-6. Bloquear qualquer tráfego de entrada do OUTSIDE para o INSIDE nas portas não autorizadas; (Ana Vidal)
-**Só depois de implementar o DMZ**
-1. Permitir tráfego de saída do INSIDE para um servidor específico no DMZ na porta 443 (HTTPS);(Ana Vidal)
-2. Permitir tráfego de entrada do DMZ para o INSIDE apenas nas portas específicas 80 (HTTP) e 443 (HTTPS); (Ana Vidal)
+TODO: Verificar se a configuração está correta.
 
+Para limitar o acesso à rede, as seguintes ACLs foram implementadas nas *firewalls*:
 
-#### Regra 1
 ```sql
-set firewall name INSIDE-OUTSIDE rule 1 action accept
-set firewall name INSIDE-OUTSIDE rule 1 source zone INSIDE
-set firewall name INSIDE-OUTSIDE rule 1 destination zone OUTSIDE
-set firewall name INSIDE-OUTSIDE rule 1 state established enable
-set zone-policy zone INSIDE from OUTSIDE firewall name INSIDE-OUTSIDE
+set firewall name CONTROLLED default-action drop
+set firewall name ESTABLISHED default-action drop
+```
+
+### Regras entre Zonas
+
+Foram escolhidas um conjunto de regras para implementar nas firewalls, de forma a garantir a segurança e a integridade da rede mitigando ataques comuns à rede (e.g SYN Flood na regra `6`, DDoS na regra `4`).
+
+Lista de regras entre zonas:
+1. Permitir tráfego de saída do INSIDE dos seguintes protocolos: TCP, UDP, ICMP, SSH, HTTP, DNS e HTTPS;
+2. Permitir tráfego já estabelecido pelo INSIDE;
+3. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados (ip privado: 10.2.2.0/24);
+4. Limitar o tráfego de rede para o servidor DMZ (porta 4 das FWs) para 25 Mbps;
+5. Permitir acesso ao servidor DMZ apenas em horário laboral (9h-18h);
+6. Limitar o envio de pacotes SYN para 100 por segundo;
+
+
+Nas *firewalls* `FW1` e `FW2`, as regras assim definidas:
+
+```sql
+configure
+
+# Regra 1 - Definição de conexões permitidas
+set firewall name CONTROLLED rule 11 description "Accept HTTP" # HTTP traffic
+set firewall name CONTROLLED rule 11 action accept
+set firewall name CONTROLLED rule 11 protocol tcp
+set firewall name CONTROLLED rule 11 destination address 0.0.0.0/0
+set firewall name CONTROLLED rule 11 destination port 80
+
+set firewall name CONTROLLED rule 12 description "Accept HTTPS" # HTTPS traffic
+set firewall name CONTROLLED rule 12 action accept
+set firewall name CONTROLLED rule 12 protocol tcp
+set firewall name CONTROLLED rule 12 destination address 0.0.0.0/0
+set firewall name CONTROLLED rule 12 destination port 443
+
+set firewall name CONTROLLED rule 13 description "Accept SSH" # SSH traffic
+set firewall name CONTROLLED rule 13 action accept
+set firewall name CONTROLLED rule 13 protocol tcp
+set firewall name CONTROLLED rule 13 destination address 0.0.0.0/0
+set firewall name CONTROLLED rule 13 destination port 22
+
+set firewall name CONTROLLED rule 14 description "Accept ICMP" # ICMP traffic
+set firewall name CONTROLLED rule 14 action accept
+set firewall name CONTROLLED rule 14 protocol icmp
+set firewall name CONTROLLED rule 14 destination address 0.0.0.0/0
+
+set firewall name CONTROLLED rule 15 description "Accept DNS TCP" # DNS traffic
+set firewall name CONTROLLED rule 15 action accept
+set firewall name CONTROLLED rule 15 protocol tcp
+set firewall name CONTROLLED rule 15 destination address 0.0.0.0/0
+set firewall name CONTROLLED rule 15 destination port 53
+
+set firewall name CONTROLLED rule 16 description "Accept DNS UDP" # DNS traffic
+set firewall name CONTROLLED rule 16 action accept
+set firewall name CONTROLLED rule 16 protocol udp
+set firewall name CONTROLLED rule 16 destination address
+set firewall name CONTROLLED rule 16 destination port 53
+
+
+# Regra 2 - Conexões já estabelecidas
+set firewall name ESTABLISHED rule 20 description "Accept Established-Related Connections"
+set firewall name ESTABLISHED rule 20 action accept
+set firewall name ESTABLISHED rule 20 state established enable
+set firewall name ESTABLISHED rule 20 state related enable
+
+# Regra 3 - Bloqueio p/ endereços privados
+set firewall name CONTROLLED rule 30 description "Block Private IP Addresses"
+set firewall name CONTROLLED rule 30 action drop
+set firewall name CONTROLLED rule 30 source address 'any'
+set firewall name CONTROLLED rule 30 destination address 10.2.2.0/24 # Private IP Address
+
+# Regra 4 - Rate limiting 
+set traffic-policy shaper RATE-LIMIT bandwidth 25mbit 
+set traffic-policy shaper RATE-LIMIT default bandwidth 100% 
+set interfaces ethernet eth4 traffic-policy out RATE-LIMIT
+
+# Regra 5 - Horário laboral p/ servidor DMZ
+set firewall name CONTROLLED rule 50 description "Allow DMZ Access During Business Hours"
+set firewall name CONTROLLED rule 50 action accept
+set firewall name CONTROLLED rule 50 state new enable
+set firewall name CONTROLLED rule 50 time start 09:00:00
+set firewall name CONTROLLED rule 50 time stop 18:00:00
+set firewall name CONTROLLED rule 50 destination address # DMZ IP Address
+
+
+# Regra 6 - Mitigação de SYN Flood
+set firewall name CONTROLLED rule 60 description "SYN Flood Protection"
+set firewall name CONTROLLED rule 60 action drop
+set firewall name CONTROLLED rule 60 protocol tcp
+set firewall name CONTROLLED rule 60 state new enable
+set firewall name CONTROLLED rule 60 tcp flags 'SYN'
+set firewall name CONTROLLED rule 60 rate limit '100/second'
 
 commit
 save
 ```
 
-#### Regra 2
+### Aplicação das Regras
+
+Nas *firewalls* `FW1` e `FW2`, as regras foram aplicadas da seguinte forma:
 
 ```sql
-set firewall name INSIDE-OUTSIDE rule 2 action accept
-set firewall name INSIDE-OUTSIDE rule 2 source zone INSIDE
-set firewall name INSIDE-OUTSIDE rule 2 destination zone OUTSIDE
-set firewall name INSIDE-OUTSIDE rule 2 state related enable
-```
+# p/ DMZ
+set zone-policy zone DMZ from INSIDE firewall name CONTROLLED
+set zone-policy zone DMZ from OUTSIDE firewall name CONTROLLED
 
-#### Regra 3 (ip privado: 10.1.1.0/24)
+# p/ OUTSIDE
+set zone-policy zone OUTSIDE from INSIDE firewall name CONTROLLED
+set zone-policy zone OUTSIDE from DMZ firewall name ESTABLISHED
 
-```sql
-set firewall name OUTSIDE-INSIDE rule 2 action drop
-set firewall name OUTSIDE-INSIDE rule 2 source zone OUTSIDE
-set firewall name OUTSIDE-INSIDE rule 2 destination address 10.1.1.0/24
-```
-
-#### Regra 4
-
-```sql
-set firewall name OUTSIDE-INSIDE rule 3 action drop
-set firewall name OUTSIDE-INSIDE rule 3 source zone OUTSIDE
-set firewall name OUTSIDE-INSIDE rule 3 destination zone INSIDE
-set firewall name OUTSIDE-INSIDE rule 3 protocol icmp
-```
-
-#### Regra 4
-```sql
-set firewall name OUTSIDE-TO-INSIDE rule 10 action accept
-set firewall name OUTSIDE-TO-INSIDE rule 10 protocol tcp
-set firewall name OUTSIDE-TO-INSIDE rule 10 destination port 80
-set firewall name OUTSIDE-TO-INSIDE rule 20 action accept
-set firewall name OUTSIDE-TO-INSIDE rule 20 protocol tcp
-set firewall name OUTSIDE-TO-INSIDE rule 20 destination port 443
-set firewall name OUTSIDE-TO-INSIDE default-action drop
-```
-
-#### Regra 5
-```sql
-set firewall name OUTSIDE-TO-INSIDE rule 30 action drop
-```
-
-#### Regra 6
-```sql
-set firewall name INSIDE-TO-DMZ rule 10 action accept
-set firewall name INSIDE-TO-DMZ rule 10 protocol tcp
-set firewall name INSIDE-TO-DMZ rule 10 destination address <endereço_do_servidor_DMZ>
-set firewall name INSIDE-TO-DMZ rule 10 destination port 443
-set firewall name INSIDE-TO-DMZ default-action drop
-```
-
-#### Regra 7
-```sql
-set firewall name DMZ-TO-INSIDE rule 10 action accept
-set firewall name DMZ-TO-INSIDE rule 10 protocol tcp
-set firewall name DMZ-TO-INSIDE rule 10 destination port 80
-set firewall name DMZ-TO-INSIDE rule 20 action accept
-set firewall name DMZ-TO-INSIDE rule 20 protocol tcp
-set firewall name DMZ-TO-INSIDE rule 20 destination port 443
-set firewall name DMZ-TO-INSIDE default-action drop
+# p/ INSIDE
+set zone-policy zone INSIDE from OUTSIDE firewall name ESTABLISHED
+set zone-policy zone INSIDE from DMZ firewall name ESTABLISHED
 ```
 
 ## Conclusão
