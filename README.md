@@ -50,7 +50,7 @@ Explicar os seguintes conceitos:
   <img src="image.png" alt="Topologia" width="1000"/>
 </p>
 
-### Rotas Estáticas e Conectividade da Rede
+### Configuração
 
 Vamos começar por atribuir os endereços IP às interfaces dos routers e aos computadores de acordo com o enunciado.
 
@@ -80,9 +80,6 @@ end
 write
 ```
 
-IP NAT: 192.1.0.0/23
-Mascara do IP NAT: 255.255.254.0 
-
 R2 (*router* externo):
 ```sql
 conf t
@@ -100,7 +97,10 @@ write
 
 LB1A (*load balancer* superior interno):
 ```sql
+configure
 set system host-name LB1A
+
+# Interfaces
 set interfaces ethernet eth0 address 10.1.1.11/24
 set interfaces ethernet eth1 address 10.0.1.11/24
 set interfaces ethernet eth2 address 10.0.6.1/24
@@ -109,13 +109,39 @@ set interfaces ethernet eth3 address 10.3.1.1/24
 # Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
 
+# Load-Balancing
+set load-balancing wan interface-health eth1 nexthop 10.0.1.12 # FW1
+set load-balancing wan interface-health eth2 nexthop 10.0.6.2 # FW2
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 interface eth1 weight 1
+set load-balancing wan rule 1 interface eth2 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
+
+# VRRP
+set high-availability vrrp group LBCluster1 vrid 10
+set high-availability vrrp group LBCluster1 interface eth3
+set high-availability vrrp group LBCluster1 virtual-address 192.168.100.1/24
+set high-availability vrrp sync-group LBCluster1 member LBCluster1
+set high-availability vrrp group LBCluster1 rfc3768-compatibility
+
+# Conntrack-sync
+set service conntrack-sync accept-protocol 'tcp,udp,icmp'
+set service conntrack-sync failover-mechanism vrrp sync-group LBCluster1
+set service conntrack-sync interface eth3
+set service conntrack-sync mcast-group 225.0.0.50
+set service conntrack-sync disable-external-cache
+
 commit
 save
 ```
 
 LB1B (*load balancer* inferior interno):
 ```sql
+configure
 set system host-name LB1B
+
+# Interfaces
 set interfaces ethernet eth0 address 10.1.1.12/24
 set interfaces ethernet eth1 address 10.0.5.1/24
 set interfaces ethernet eth2 address 10.0.2.12/24
@@ -124,53 +150,28 @@ set interfaces ethernet eth3 address 10.3.1.2/24
 # Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
 
-commit
-save
-```
+# Load-Balancing
+set load-balancing wan interface-health eth1 nexthop 10.0.5.2 # FW1
+set load-balancing wan interface-health eth2 nexthop 10.0.2.13 # FW2
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 interface eth1 weight 1
+set load-balancing wan rule 1 interface eth2 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
 
-FW1 (*firewall* superior):
-```sql
-set system host-name FW1
-set interfaces ethernet eth0 address 10.0.1.12/24
-set interfaces ethernet eth1 address 10.0.5.2/24
-set interfaces ethernet eth2 address 10.0.4.1/24
-set interfaces ethernet eth3 address 10.0.7.1/24
+# VRRP
+set high-availability vrrp group LBCluster1 vrid 10
+set high-availability vrrp group LBCluster1 interface eth3
+set high-availability vrrp group LBCluster1 virtual-address 192.168.100.1/24
+set high-availability vrrp sync-group LBCluster1 member LBCluster1
+set high-availability vrrp group LBCluster1 rfc3768-compatibility
 
-# Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.0.1.11 # LB1A
-set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
-set protocols static route 0.0.0.0/0 next-hop 10.0.4.2 # LB2A
-set protocols static route 0.0.0.0/0 next-hop 10.0.7.2 # LB2B
-
-# NAT Translation
-set nat source rule 10 outbound-interface eth2
-set nat source rule 10 outbound-interface eth3
-set nat source rule 10 source address 10.0.0.0/8
-set nat source rule 10 translation address 192.1.0.1-192.1.0.15
-
-commit
-save
-```
-
-FW2 (*firewall* inferior):
-```sql
-set system host-name FW2
-set interfaces ethernet eth0 address 10.0.6.2/24
-set interfaces ethernet eth1 address 10.0.2.13/24
-set interfaces ethernet eth2 address 10.0.8.1/24
-set interfaces ethernet eth3 address 10.0.3.1/24
-
-# Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
-set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
-set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
-set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
-
-# NAT Translation
-set nat source rule 10 outbound-interface eth2
-set nat source rule 10 outbound-interface eth3
-set nat source rule 10 source address 10.0.0.0/8
-set nat source rule 10 translation address 192.1.0.16-192.1.0.31
+# Conntrack-sync
+set service conntrack-sync accept-protocol 'tcp,udp,icmp'
+set service conntrack-sync failover-mechanism vrrp sync-group LBCluster1
+set service conntrack-sync interface eth3
+set service conntrack-sync mcast-group 225.0.0.50
+set service conntrack-sync disable-external-cache
 
 commit
 save
@@ -178,7 +179,10 @@ save
 
 LB2A (*load balancer* superior externo):
 ```sql
+configure
 set system host-name LB2A
+
+# Interfaces
 set interfaces ethernet eth0 address 200.1.1.11/24
 set interfaces ethernet eth1 address 10.0.4.2/24
 set interfaces ethernet eth2 address 10.0.8.2/24
@@ -187,13 +191,39 @@ set interfaces ethernet eth3 address 10.4.1.1/24
 # Rotas Estáticas
 set protocols static route 200.2.2.0/24 next-hop 200.1.1.10 # R2
 
+# Load-Balancing
+set load-balancing wan interface-health eth1 nexthop 10.0.4.1 # FW1
+set load-balancing wan interface-health eth2 nexthop 10.0.8.1 # FW2
+set load-balancing wan rule 1 inbound-interface eth0
+set load-balancing wan rule 1 interface eth1 weight 1
+set load-balancing wan rule 1 interface eth2 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
+
+# VRRP
+set high-availability vrrp group LBCluster2 vrid 10
+set high-availability vrrp group LBCluster2 interface eth3
+set high-availability vrrp group LBCluster2 virtual-address 192.168.100.2/24
+set high-availability vrrp sync-group LBCluster2 member LBCluster2
+set high-availability vrrp group LBCluster2 rfc3768-compatibility
+
+# Conntrack-sync
+set service conntrack-sync accept-protocol 'tcp,udp,icmp'
+set service conntrack-sync failover-mechanism vrrp sync-group LBCluster2
+set service conntrack-sync interface eth3
+set service conntrack-sync mcast-group 225.0.0.50
+set service conntrack-sync disable-external-cache
+
 commit
 save
 ```
 
 LB2B (*load balancer* inferior externo):
 ```sql
+configure
 set system host-name LB2B
+
+# Interfaces
 set interfaces ethernet eth0 address 200.1.1.12/24
 set interfaces ethernet eth1 address 10.0.7.2/24
 set interfaces ethernet eth2 address 10.0.3.2/24
@@ -202,128 +232,147 @@ set interfaces ethernet eth3 address 10.4.1.2/24
 # Rotas Estáticas
 set protocols static route 200.2.2.0/24 next-hop 200.1.1.10 # R2
 
-commit
-save
-```
-
-### Load-Balancers
-
-LB1A (*load balancer* superior interno):
-```sql
-set load-balancing wan interface-health eth1 nexthop 10.0.1.12
-set load-balancing wan interface-health eth2 nexthop 10.0.6.2
+# Load-Balancing
+set load-balancing wan interface-health eth1 nexthop 10.0.7.1 # FW1
+set load-balancing wan interface-health eth2 nexthop 10.0.3.1 # FW2
 set load-balancing wan rule 1 inbound-interface eth0
 set load-balancing wan rule 1 interface eth1 weight 1
 set load-balancing wan rule 1 interface eth2 weight 1
 set load-balancing wan sticky-connections inbound
 set load-balancing wan disable-source-nat
 
-commit
-save
-```
-
-LB1B (*load balancer* Superior externo):
-```sql
-set load-balancing wan interface-health eth1 nexthop 10.0.5.2
-set load-balancing wan interface-health eth2 nexthop 10.0.2.13
-set load-balancing wan rule 1 inbound-interface eth0
-set load-balancing wan rule 1 interface eth1 weight 1
-set load-balancing wan rule 1 interface eth2 weight 1
-set load-balancing wan sticky-connections inbound
-set load-balancing wan disable-source-nat
-
-commit
-save
-```
-
-LB2A (*load balancer* inferior externo):
-```sql
-set load-balancing wan interface-health eth1 nexthop 10.0.4.1
-set load-balancing wan interface-health eth2 nexthop 10.0.8.1
-set load-balancing wan rule 1 inbound-interface eth0
-set load-balancing wan rule 1 interface eth1 weight 1
-set load-balancing wan rule 1 interface eth2 weight 1
-set load-balancing wan sticky-connections inbound
-set load-balancing wan disable-source-nat
-
-commit
-save
-```
-
-LB2B (*load balancer* inferior interno):
-```sql
-set load-balancing wan interface-health eth1 nexthop 10.0.7.1
-set load-balancing wan interface-health eth2 nexthop 10.0.3.1
-set load-balancing wan rule 1 inbound-interface eth0
-set load-balancing wan rule 1 interface eth1 weight 1
-set load-balancing wan rule 1 interface eth2 weight 1
-set load-balancing wan sticky-connections inbound
-set load-balancing wan disable-source-nat
-
-commit
-save
-```
-
-### Sincronização de Estados (*State Synchronization*)
-
-VRRP nos Load-Balancers internos:
-```sql
-set high-availability vrrp group LBCluster1 vrid 10
-set high-availability vrrp group LBCluster1 interface eth3
-set high-availability vrrp group LBCluster1 virtual-address 192.168.100.1/24
-set high-availability vrrp sync-group LBCluster1 member LBCluster1
-set high-availability vrrp group LBCluster1 rfc3768-compatibility
-```
-
-VRRP nos Load-Balancers externos:
-```sql
+# VRRP
 set high-availability vrrp group LBCluster2 vrid 10
 set high-availability vrrp group LBCluster2 interface eth3
 set high-availability vrrp group LBCluster2 virtual-address 192.168.100.2/24
 set high-availability vrrp sync-group LBCluster2 member LBCluster2
 set high-availability vrrp group LBCluster2 rfc3768-compatibility
-```
 
-conntrack-sync nos Load-Balancers internos:
-```sql
-set service conntrack-sync accept-protocol 'tcp,udp,icmp'
-set service conntrack-sync failover-mechanism vrrp sync-group LBCluster1
-set service conntrack-sync interface eth3
-set service conntrack-sync mcast-group 225.0.0.50
-set service conntrack-sync disable-external-cache
-```
-
-conntrack-sync nos Load-Balancers externos:
-```sql
+# Conntrack-sync
 set service conntrack-sync accept-protocol 'tcp,udp,icmp'
 set service conntrack-sync failover-mechanism vrrp sync-group LBCluster2
 set service conntrack-sync interface eth3
 set service conntrack-sync mcast-group 225.0.0.50
 set service conntrack-sync disable-external-cache
+
+commit
+save
 ```
 
-
-### Definição de Zonas
-
-Definição de Zona Inside:
+FW1 (*firewall* superior):
 ```sql
+configure
+set system host-name FW1
+
+# Interfaces (ADICIONAR INTERFACE DMZ)
+set interfaces ethernet eth0 address 10.0.1.12/24
+set interfaces ethernet eth1 address 10.0.5.2/24
+set interfaces ethernet eth2 address 10.0.4.1/24
+set interfaces ethernet eth3 address 10.0.7.1/24
+
+# Rotas Estáticas (ADICIONAR ROTA PARA DMZ, LB3)
+set protocols static route 10.2.2.0/24 next-hop 10.0.1.11 # LB1A
+set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
+set protocols static route 0.0.0.0/0 next-hop 10.0.4.2 # LB2A
+set protocols static route 0.0.0.0/0 next-hop 10.0.7.2 # LB2B
+
+# NAT Translation
+set nat source rule 10 outbound-interface eth2
+set nat source rule 10 source address 10.0.0.0/8
+set nat source rule 10 translation address 192.1.0.1-192.1.0.15
+
+# Zone Definition (DMZ P/ FAZER)
 set zone-policy zone INSIDE description "Inside (Internal Network)"
 set zone-policy zone INSIDE interface eth0
 set zone-policy zone INSIDE interface eth1
-```
-
-Definição de Zona Outside:
-```sql
 set zone-policy zone OUTSIDE description "Outside (External Network)"
 set zone-policy zone OUTSIDE interface eth2
 set zone-policy zone OUTSIDE interface eth3
+
+# Zone Policy
+
+commit
+save
 ```
 
-Definição de Zona DMZ (POR FAZER):
+FW2 (*firewall* inferior):
+```sql
+configure
+set system host-name FW2
+
+# Interfaces (ADICIONAR INTERFACE DMZ)
+set interfaces ethernet eth0 address 10.0.6.2/24
+set interfaces ethernet eth1 address 10.0.2.13/24
+set interfaces ethernet eth2 address 10.0.8.1/24
+set interfaces ethernet eth3 address 10.0.3.1/24
+
+# Rotas Estáticas (ADICIONAR ROTA PARA DMZ, LB3)
+set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
+set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
+set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
+set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
+
+# NAT Translation
+set nat source rule 10 outbound-interface eth3
+set nat source rule 10 source address 10.0.0.0/8
+set nat source rule 10 translation address 192.1.0.16-192.1.0.31
+
+# Zone Definition (DMZ P/ FAZER)
+set zone-policy zone INSIDE description "Inside (Internal Network)"
+set zone-policy zone INSIDE interface eth0
+set zone-policy zone INSIDE interface eth1
+set zone-policy zone OUTSIDE description "Outside (External Network)"
+set zone-policy zone OUTSIDE interface eth2
+set zone-policy zone OUTSIDE interface eth3
+
+# Zone Policy
+
+commit
+save
+```
+
+### Questões finais
+
+1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.
+
+  R: A sincronização feita nos load balancers permite que os pedidos do cliente atinjam sempre o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
+  
+  Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
+
+2. Which load balancing algorithm may also allow the nonexistence of load-balancers synchronization?
+
+   R: Using IP Hash LB algorithms doesn't require routing history synchronization (between LB). Using other LB algorithms, they must share routing history.
+
+3. Explain why device/connection states synchronization may be detrimental during a DDoS attack
+   
+   R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na deteção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
+
+## Ponto 10 (corrigir POR MIM)
+
+Servidor DMZ (Por escrever):
 ```sql
 ```
 
-### Regras entre Zonas
+LB3 (*load balancer* DMZ - Por corrigir):
+```sql
+configure
+set system host-name LB3
+
+# Interfaces
+set interfaces ethernet eth0 address 10.1.1.11/24
+set interfaces ethernet eth1 address 10.0.1.11/24
+set interfaces ethernet eth2 address 10.0.6.1/24
+
+# Rotas Estáticas
+set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
+
+# Load-Balancing
+
+commit
+save
+```
+
+### Regras entre Zonas (Ideia: Alterar as regras para ter 'PERMITTED' e 'RESTRICTED' apenas)
 
 Listagem de regras entre zonas:
 1. Permitir qualquer tráfego de saída do INSIDE para o OUTSIDE;
@@ -410,63 +459,7 @@ set firewall name DMZ-TO-INSIDE rule 20 protocol tcp
 set firewall name DMZ-TO-INSIDE rule 20 destination port 443
 set firewall name DMZ-TO-INSIDE default-action drop
 ```
-### Questões finais
 
-1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.
-
-  R: A sincronização feita nos load balancers permite que os pedidos do cliente atinjam sempre o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
-  
-  Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
-
-2. Which load balancing algorithm may also allow the nonexistence of load-balancers synchronization?
-   R: Using IP Hash LB algorithms doesn't require routing history synchronization (between LB). Using other LB algorithms, they must share routing history.
-4. Explain why device/connection states synchronization may be detrimental during a DDoS attack
-   R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na deteção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
-
-## Ponto 10 (corrigir POR MIM)
-LB3 (*load balancer* DMZ):
-```sql
-set interfaces ethernet eth0 address 10.1.1.11/24
-set interfaces ethernet eth1 address 10.0.1.11/24
-set interfaces ethernet eth2 address 10.0.6.1/24
-# Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
-
-commit
-save
-```
-
-```sql
-set load-balancing wan interface-health eth0 nexthop 10.0.9.1
-set load-balancing wan interface-health eth1 nexthop 10.0.10.1
-set load-balancing wan rule 1 inbound-interface eth2
-set load-balancing wan rule 1 interface eth0 weight 1
-set load-balancing wan rule 1 interface eth1 weight 1
-set load-balancing wan sticky-connections inbound
-set load-balancing wan disable-source-nat
-
-commit
-save
-```
-FW1 (*firewall* superior):
-```sql
-set interfaces ethernet eth4 address 10.0.10.1/24
-
-# Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
-set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
-set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
-set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
-
-FW2 (*firewall* inferior):
-```sql
-set interfaces ethernet eth4 address 10.0.9.1/24
-
-# Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
-set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
-set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
-set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
 ## Conclusão
 
 Em síntese, a implementação de firewalls de alta disponibilidade é de suma importância para garantir a continuidade operacional e a segurança das redes empresariais. Através da plataforma VyOS, foram explorados diversos cenários de configuração com o intuito de maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar quatro load balancers, onde dois deles estão sincronizados entre si, e distribuir de forma equilibrada o tráfego entre eles, foi possível mitigar falhas de hardware e assegurar uma proteção contínua contra ameaças cibernéticas. Adicionalmente, a integração do conntrack-sync nos load balancers permitiu uma sincronização eficiente dos estados de conexão, contribuindo para uma resposta mais eficaz e robusta da infraestrutura de segurança.
