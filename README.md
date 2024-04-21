@@ -7,16 +7,28 @@
 ## Estrutura do Relatório
 
 1. Introdução;
-2. Estado-de-Arte (Simão)
-3. Rotas de Rede e conectividade;
-4. Load-Balancers;
-5. Configuração da Firewall:
-   1. Zonas e Regras;
-6. Questões Finais;
-7. Testes de Funcionamento (Ana e Simão)
-8. Conclusão;
+2. Objetivos;
+3. Política de segurança (Simão);
+4. Ponto 9:
+   1. Rotas de Rede e conectividade;
+   2. Load-Balancers;
+   3. Sincronização de Estados de Dispositivos;
+   4. Questões Finais;
+5. Ponto 10:
+   1. Configuração do Servidor DMZ;
+   2. Configuração da Firewall;
+   3. Zonas e Regras;
+6. Testes de Funcionamento (Ana e Simão)
+7. Conclusão;
 
-## Objetivo
+## Introdução
+
+> [!TIP]
+> **Comentário**: O foco da introdução é apresentar o tema do trabalho, não é necessário falar sobre as ferramentas usadas (VyOS). Começar em que âmbito o trabalho foi feito, depois falar sobre a sincronização de estados, introduzir (NÃO DESENVOLVER MUITO) que existem prós-e-contras relativamente á sua implementação, depois falar sobre as firewalls (DE MODO BREVE) e explicar que para uma boa defesa de uma rede é necessário definir um conjunto de politicas de controlo de fluxo de tráfego, e que é isso que será feito no trabalho.
+
+Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os firewalls assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de firewalls de alta disponibilidade utilizando a plataforma VyOS. O VyOS é uma solução de código aberto reconhecida pela sua flexibilidade e recursos avançados de segurança. Focar-nos-emos na configuração de firewalls redundantes e na distribuição de carga de tráfego, com o propósito de garantir a disponibilidade contínua dos serviços de rede. Adicionalmente, iremos analisar a implementação de funcionalidades como o conntrack-sync, que permite a sincronização de estados de conexão entre os dispositivos de firewall, potenciando ainda mais a resiliência da infraestrutura de segurança.
+
+## Objetivos
 
 Apresentar um relatório dos **testes de configuração** e de **funcionamento** dos cenários descritos nos pontos `9` e `10` do guia laboratorial “High-Availability Firewall Scenarios”.
 
@@ -25,22 +37,23 @@ Temos as seguintes tarefas a serem realizadas:
 - [x] Firewall and load-balancers deployment (2 valores).
 - [x] Network routing and connectivity (2 valores).
 - [x] Devices state synchronization (3 valores).
-- [ ] Zones definition (3 valores).
-- [ ] Inter-zone rules (6 valores).
+- [x] Zones definition (3 valores).
+- [x] Inter-zone rules (6 valores).
 - [ ] Report (4 valores).
 
-## Introdução
+## Política de Segurança
 
-Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os firewalls assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de firewalls de alta disponibilidade utilizando a plataforma VyOS. O VyOS é uma solução de código aberto reconhecida pela sua flexibilidade e recursos avançados de segurança. Focar-nos-emos na configuração de firewalls redundantes e na distribuição de carga de tráfego, com o propósito de garantir a disponibilidade contínua dos serviços de rede. Adicionalmente, iremos analisar a implementação de funcionalidades como o conntrack-sync, que permite a sincronização de estados de conexão entre os dispositivos de firewall, potenciando ainda mais a resiliência da infraestrutura de segurança. 
+A política de segurança deve priorizar a proteção dos recursos da rede, garantindo que apenas o tráfego necessário e seguro seja permitido e implementando medidas para mitigar possíveis ataques. 
 
-## Estado-de-Arte
+Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem implementadas:
 
-Explicar os seguintes conceitos:
-- **Firewall**;
-- **Zonas e Regras**;
-- **Load Balancer**;
-- **State Synchronization**;
-- **Redundancy Synchronization**;
+| Código | Descrição                                                                                                    |
+| ------ | ------------------------------------------------------------------------------------------------------------ |
+| D_01   | A rede interna irá receber apenas o tráfego estabelecido por esta, bloqueando todo o tráfego não solicitado. |
+| D_02   | As comunicações para a rede externa serão apenas permitidas usando protocolos especificados.                 |
+| D_03   | O tráfego para a DMZ deverá ser limitado, evitando ataques DDoS (*Distributed Denial of Service*).           |
+| D_04   | O acesso à DMZ será permitido apenas durante o horário laboral.                                              |
+| D_05   | O tráfego para endereços privados será bloqueado.                                                            |
 
 ## Ponto 9
 
@@ -49,24 +62,27 @@ Explicar os seguintes conceitos:
 <p align="center">
   <img src="image.png" alt="Topologia" width="1000"/>
 </p>
+<p align="center">
+  <i> Fig. 1 - Topologia da rede </i>
+</p>
 
 ### Configuração
 
 Vamos começar por atribuir os endereços IP às interfaces dos routers e aos computadores de acordo com o enunciado.
 
-PC1 (computador interno):
+#### PC1 (computador interno):
 ```sql
 ip 10.2.2.100/24 10.2.2.10
 save
 ```
 
-PC2 (computador externo):
+#### PC2 (computador externo):
 ```sql
 ip 200.2.2.100/24 200.2.2.10
 save
 ```
 
-R1 (*router* interno):
+#### R1 (*router* interno):
 ```sql
 conf t 
 ip route 0.0.0.0 0.0.0.0 10.1.1.11 # LB1A
@@ -80,7 +96,9 @@ end
 write
 ```
 
-R2 (*router* externo):
+> Na rota estática apenas é necessário definir o *next-hop* para **um dos *load balancers***, uma vez que estes **estão sincronizados**.
+
+#### R2 (*router* externo):
 ```sql
 conf t
 ip route 0.0.0.0 0.0.0.0 200.1.1.12 # LB2B
@@ -95,7 +113,7 @@ end
 write
 ```
 
-LB1A (*load balancer* superior interno):
+#### LB1A (*load balancer* superior interno):
 ```sql
 configure
 set system host-name LB1A
@@ -136,7 +154,17 @@ commit
 save
 ```
 
-LB1B (*load balancer* inferior interno):
+> Por norma, em ataques DDoS, o objetivo do atacante é sobrecarregar o servidor com um grande volume de tráfego malicioso, tornando-o inacessível para os utilizadores legítimos. Uma das técnicas para mitigar este tipo de ataques é a distribuição de carga de tráfego, de modo a que o servidor não fique sobrecarregado.
+>
+> No entanto, a sincronização de estados entre os *load balancers* pode ser **prejudicial durante um ataque DDoS**, uma vez que aumenta o overhead de processamento, atrasa a deteção e mitigação do ataque, esgota os recursos e aumenta a complexidade da rede. Por isso, seria preferível o uso de algoritmos de *load balancing* que não requerem esta sincronização.
+>
+> Alguns exemplos de **algoritmos de *load balancing*** que não requerem a sincronização de estados entre os *load balancers* são:
+> - **Round Robin**: Os *requests* são distribuídos sequencialmente pelos servidores, voltando ao primeiro servidor quando o final da lista é atingido.
+> - **IP Hash**: Os *requests* são encaminhados para servidores com base num hash do endereço IP do cliente.
+> - **Least Connections**: Os *requests* são encaminhados para o servidor com o menor número de conexões ativas.
+> - **Random**: Os *requests* são encaminhados para um servidor aleatório, logo nenhum estado é mantido.
+
+#### LB1B (*load balancer* inferior interno):
 ```sql
 configure
 set system host-name LB1B
@@ -177,7 +205,11 @@ commit
 save
 ```
 
-LB2A (*load balancer* superior externo):
+> A sincronização de estados é feita através do `conntrack-sync`, que permite a sincronização de estados de conexão entre os dispositivos de *firewall*. 
+
+> O mecanismo utilizado é o *fail-over*, onde um dos *load balancers* é definido como o principal e o outro como secundário. O *load balancer* principal é responsável por encaminhar o tráfego para os servidores, enquanto o secundário fica em *standby*, pronto para assumir o controlo em caso de falha do principal, criando redundância.
+
+#### LB2A (*load balancer* superior externo):
 ```sql
 configure
 set system host-name LB2A
@@ -218,7 +250,12 @@ commit
 save
 ```
 
-LB2B (*load balancer* inferior externo):
+> Ativando o *sticky sessions*, permite que os pedidos do cliente sejam sempre encaminhados pelo mesmo *load balancer*.
+
+> Evitando que o *firewall* tenha de sincronizar estados entre os servidores.
+
+
+#### LB2B (*load balancer* inferior externo):
 ```sql
 configure
 set system host-name LB2B
@@ -259,7 +296,7 @@ commit
 save
 ```
 
-FW1 (*firewall* superior):
+#### FW1 (*firewall* superior):
 ```sql
 configure
 set system host-name FW1
@@ -284,22 +321,20 @@ set nat source rule 10 source address 10.0.0.0/8
 set nat source rule 10 translation address 192.1.0.1-192.1.0.15
 
 # Zone Definition
-set zone-policy zone INSIDE description "Inside (Internal Network)"
-set zone-policy zone INSIDE interface eth0
-set zone-policy zone INSIDE interface eth1
-set zone-policy zone OUTSIDE description "Outside (External Network)"
-set zone-policy zone OUTSIDE interface eth2
-set zone-policy zone OUTSIDE interface eth3
-set zone-policy zone DMZ description "DMZ (Server Farm)"
-set zone-policy zone DMZ interface eth4
+(No Ponto 10)
 
 # Zone Policy
 (No Ponto 10)
+
 commit
 save
 ```
 
-FW2 (*firewall* inferior):
+> O NAT (*Network Address Translation*) é uma técnica utilizada para traduzir endereços IP e portas de um endereço para outro, permitindo que os dispositivos de uma rede privada comuniquem com dispositivos de uma rede pública. O NAT é utilizado para proteger a rede interna de ataques externos, ocultando os endereços IP privados dos dispositivos internos e permitindo que estes comuniquem com a rede externa através de um único endereço IP público.
+> 
+> Apenas é necessário definir uma interface de saída para o NAT (*outbound-interface*), uma vez que as *firewalls* estão ligadas aos *load balancers* conectados à rede externa.
+
+#### FW2 (*firewall* inferior):
 ```sql
 configure
 set system host-name FW2
@@ -324,44 +359,45 @@ set nat source rule 10 source address 10.0.0.0/8
 set nat source rule 10 translation address 192.1.0.16-192.1.0.31
 
 # Zone Definition
-set zone-policy zone INSIDE description "Inside (Internal Network)"
-set zone-policy zone INSIDE interface eth0
-set zone-policy zone INSIDE interface eth1
-set zone-policy zone OUTSIDE description "Outside (External Network)"
-set zone-policy zone OUTSIDE interface eth2
-set zone-policy zone OUTSIDE interface eth3
-set zone-policy zone DMZ description "DMZ (Server Farm)"
-set zone-policy zone DMZ interface eth4
+(No Ponto 10)
 
 # Zone Policy
 (No Ponto 10)
+
 commit
 save
 ```
 
 ### Questões finais
 
-1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.
+**1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.**
 
-  R: A sincronização feita nos load balancers permite que os pedidos do cliente atinjam sempre o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
-  
-  Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
+   R: A sincronização feita nos load balancers permite que os pedidos do cliente atinjam sempre o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores. Isto é feito através do conceito de *sticky sessions*, que permite que os pedidos do cliente sejam sempre encaminhados para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
 
-2. Which load balancing algorithm may also allow the nonexistence of load-balancers synchronization?
+**2. Which load balancing algorithm may also allow the nonexistence of load-balancers synchronization?**
 
-   R: Using IP Hash LB algorithms doesn't require routing history synchronization (between LB). Using other LB algorithms, they must share routing history.
+   R: Um algoritmo load balancing que não requer a sincronização de estados entre os load balancers é o algoritmo *IP Hash*. Neste algoritmo, os pedidos são encaminhados para servidores com base num hash do endereço IP do cliente. Deste modo, o pedido do cliente é sempre encaminhado para o mesmo servidor, evitando que o firewall tenha de sincronizar estados entre os servidores.
 
-3. Explain why device/connection states synchronization may be detrimental during a DDoS attack
+**3. Explain why device/connection states synchronization may be detrimental during a DDoS attack.**
    
    R: Durante um ataque DDoS, a sincronização de estados nos load balancers pode ser prejudicial devido ao aumento do overhead de processamento, atrasos na deteção e mitigação do ataque, esgotamento de recursos e aumento da complexidade da rede. Isso pode comprometer a capacidade dos load balancers de lidar eficazmente com o grande volume de tráfego malicioso, colocando em risco a disponibilidade dos serviços.
 
-## Ponto 10 (corrigir POR MIM)
+## Ponto 10
+
+<p align="center">
+  <img src="image-1.png" alt="Topologia" width="1000"/>
+</p>
+<p align="center">
+  <i> Fig. 2 - Topologia da rede com a DMZ </i>
+</p>
 
 Servidor DMZ (Por escrever):
 ```sql
 ip 192.1.1.100/24 192.1.1.1
 save
 ```
+
+> A DMZ (*Demilitarized Zone*) é uma sub-rede isolada que separa a rede interna da rede externa, permitindo que os servidores públicos sejam acessíveis a partir da Internet, mas não diretamente da rede interna.
 
 LB3 (*load balancer* DMZ - Por corrigir):
 ```sql
@@ -386,6 +422,8 @@ commit
 save
 ```
 
+> Neste caso foi utilizado apenas um *load balancer* para a DMZ, uma vez que a redundância já é garantida pelos *load balancers* superiores e inferiores.
+
 ### Definição de Zonas
 
 Para definir as zonas de segurança, foram criadas as seguintes zonas nas *firewalls* `FW1` e `FW2`:
@@ -403,14 +441,14 @@ set zone-policy zone DMZ interface eth4
 
 ### Descrição da Configuração
 
-TODO: Verificar se a configuração está correta.
-
 Para limitar o acesso à rede, as seguintes ACLs foram implementadas nas *firewalls*:
 
 ```sql
 set firewall name CONTROLLED default-action drop
 set firewall name ESTABLISHED default-action drop
 ```
+
+> A lista de acessos `CONTROLLED` é utilizada para definir as regras de controlo de tráfego (o que pode ou não passar), enquanto a lista `ESTABLISHED` é utilizada para definir as regras de tráfego já estabelecido.
 
 ### Regras entre Zonas
 
@@ -505,9 +543,18 @@ commit
 save
 ```
 
+> Ataques SYN Flood (inundação de *SYN requests* sem receção do *ACK request*) ainda são comuns e uma abordagem eficaz para mitigar este tipo de ataque é limitar o número de pacotes SYN que um host pode enviar por segundo, referido na regra `6`.
+
 ### Aplicação das Regras
 
 Nas *firewalls* `FW1` e `FW2`, as regras foram aplicadas da seguinte forma:
+
+<p align="center">
+  <img src="Zone_Policy.png" alt="Zone Policy" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 3 - Diagrama de aplicação das ACLs </i>
+</p>
 
 ```sql
 # p/ DMZ
@@ -523,7 +570,14 @@ set zone-policy zone INSIDE from OUTSIDE firewall name ESTABLISHED
 set zone-policy zone INSIDE from DMZ firewall name ESTABLISHED
 ```
 
-## Conclusão
+> Ou seja, todo o tráfego para o exterior e para o DMZ (por conta de ser uma zona isolada) é filtrado, enquanto o tráfego restante é estabelecido por regras já existentes.
+
+## Testes de Funcionamento (Ana e Simão)
+
+## Conclusão 
+
+> [!TIP]
+> **Comentário**: Muito genérico, falar o que foi aprendido e o que esse novo conhecimento pode trazer, exemplo: "A implementação de dois load-balancers permitiu perceber os riscos que a escolha de um algoritmo não adequado pode trazer para a integridade da rede". Falar sobre o conhecimento obtido na fase de testes e como procedemos á resolução dos problemas que encontramos. Falar o que irá ser melhorado em trabalhos futuros, seja organizacional ou técnico.
 
 Em síntese, a implementação de firewalls de alta disponibilidade é de suma importância para garantir a continuidade operacional e a segurança das redes empresariais. Através da plataforma VyOS, foram explorados diversos cenários de configuração com o intuito de maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar quatro load balancers, onde dois deles estão sincronizados entre si, e distribuir de forma equilibrada o tráfego entre eles, foi possível mitigar falhas de hardware e assegurar uma proteção contínua contra ameaças cibernéticas. Adicionalmente, a integração do conntrack-sync nos load balancers permitiu uma sincronização eficiente dos estados de conexão, contribuindo para uma resposta mais eficaz e robusta da infraestrutura de segurança.
 
