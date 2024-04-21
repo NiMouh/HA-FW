@@ -360,6 +360,7 @@ save
 Servidor DMZ (Por escrever):
 ```sql
 ip 192.1.1.100/24 192.1.1.1
+save
 ```
 
 LB3 (*load balancer* DMZ - Por corrigir):
@@ -380,8 +381,24 @@ set load-balancing wan rule 1 interface eth0 weight 1
 set load-balancing wan rule 1 interface eth1 weight 1
 set load-balancing wan sticky-connections inbound
 set load-balancing wan disable-source-nat
+
 commit
 save
+```
+
+### Definição de Zonas
+
+Para definir as zonas de segurança, foram criadas as seguintes zonas nas *firewalls* `FW1` e `FW2`:
+
+```sql
+set zone-policy zone INSIDE description "Inside (Internal Network)"
+set zone-policy zone INSIDE interface eth0
+set zone-policy zone INSIDE interface eth1
+set zone-policy zone OUTSIDE description "Outside (External Network)"
+set zone-policy zone OUTSIDE interface eth2
+set zone-policy zone OUTSIDE interface eth3
+set zone-policy zone DMZ description "DMZ (Server Farm)"
+set zone-policy zone DMZ interface eth4
 ```
 
 ### Descrição da Configuração
@@ -446,7 +463,7 @@ set firewall name CONTROLLED rule 15 destination port 53
 set firewall name CONTROLLED rule 16 description "Accept DNS UDP" # DNS traffic
 set firewall name CONTROLLED rule 16 action accept
 set firewall name CONTROLLED rule 16 protocol udp
-set firewall name CONTROLLED rule 16 destination address
+set firewall name CONTROLLED rule 16 destination address 0.0.0.0/0
 set firewall name CONTROLLED rule 16 destination port 53
 
 
@@ -459,7 +476,7 @@ set firewall name ESTABLISHED rule 20 state related enable
 # Regra 3 - Bloqueio p/ endereços privados
 set firewall name CONTROLLED rule 30 description "Block Private IP Addresses"
 set firewall name CONTROLLED rule 30 action drop
-set firewall name CONTROLLED rule 30 source address 'any'
+set firewall name CONTROLLED rule 30 source address 0.0.0.0/0
 set firewall name CONTROLLED rule 30 destination address 10.2.2.0/24 # Private IP Address
 
 # Regra 4 - Rate limiting 
@@ -471,9 +488,9 @@ set interfaces ethernet eth4 traffic-policy out RATE-LIMIT
 set firewall name CONTROLLED rule 50 description "Allow DMZ Access During Business Hours"
 set firewall name CONTROLLED rule 50 action accept
 set firewall name CONTROLLED rule 50 state new enable
-set firewall name CONTROLLED rule 50 time start 09:00:00
-set firewall name CONTROLLED rule 50 time stop 18:00:00
-set firewall name CONTROLLED rule 50 destination address # DMZ IP Address
+set firewall name CONTROLLED rule 50 time starttime 09:00:00
+set firewall name CONTROLLED rule 50 time stoptime 18:00:00
+set firewall name CONTROLLED rule 50 destination address 192.1.1.0/24
 
 
 # Regra 6 - Mitigação de SYN Flood
@@ -482,7 +499,7 @@ set firewall name CONTROLLED rule 60 action drop
 set firewall name CONTROLLED rule 60 protocol tcp
 set firewall name CONTROLLED rule 60 state new enable
 set firewall name CONTROLLED rule 60 tcp flags 'SYN'
-set firewall name CONTROLLED rule 60 rate limit '100/second'
+set firewall name CONTROLLED rule 60 limit rate 100/second
 
 commit
 save
