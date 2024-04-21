@@ -264,33 +264,37 @@ FW1 (*firewall* superior):
 configure
 set system host-name FW1
 
-# Interfaces (ADICIONAR INTERFACE DMZ)
+# Interfaces
 set interfaces ethernet eth0 address 10.0.1.12/24
 set interfaces ethernet eth1 address 10.0.5.2/24
 set interfaces ethernet eth2 address 10.0.4.1/24
 set interfaces ethernet eth3 address 10.0.7.1/24
+set interfaces ethernet eth4 address 10.0.9.1/24
 
-# Rotas Estáticas (ADICIONAR ROTA PARA DMZ, LB3)
+# Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.0.1.11 # LB1A
 set protocols static route 10.2.2.0/24 next-hop 10.0.5.1 # LB1B
 set protocols static route 0.0.0.0/0 next-hop 10.0.4.2 # LB2A
 set protocols static route 0.0.0.0/0 next-hop 10.0.7.2 # LB2B
+set protocols static route 192.1.1.0/24 next-hop 10.0.9.2 # LB3
 
 # NAT Translation
 set nat source rule 10 outbound-interface eth2
 set nat source rule 10 source address 10.0.0.0/8
 set nat source rule 10 translation address 192.1.0.1-192.1.0.15
 
-# Zone Definition (DMZ P/ FAZER)
+# Zone Definition
 set zone-policy zone INSIDE description "Inside (Internal Network)"
 set zone-policy zone INSIDE interface eth0
 set zone-policy zone INSIDE interface eth1
 set zone-policy zone OUTSIDE description "Outside (External Network)"
 set zone-policy zone OUTSIDE interface eth2
 set zone-policy zone OUTSIDE interface eth3
+set zone-policy zone DMZ description "DMZ (Server Farm)"
+set zone-policy zone DMZ interface eth4
 
 # Zone Policy
-
+(No Ponto 10)
 commit
 save
 ```
@@ -300,33 +304,37 @@ FW2 (*firewall* inferior):
 configure
 set system host-name FW2
 
-# Interfaces (ADICIONAR INTERFACE DMZ)
+# Interfaces
 set interfaces ethernet eth0 address 10.0.6.2/24
 set interfaces ethernet eth1 address 10.0.2.13/24
 set interfaces ethernet eth2 address 10.0.8.1/24
 set interfaces ethernet eth3 address 10.0.3.1/24
+set interfaces ethernet eth4 address 10.0.10.1/24
 
-# Rotas Estáticas (ADICIONAR ROTA PARA DMZ, LB3)
+# Rotas Estáticas
 set protocols static route 10.2.2.0/24 next-hop 10.0.2.12 # LB1B
 set protocols static route 10.2.2.0/24 next-hop 10.0.6.1 # LB1A
 set protocols static route 0.0.0.0/0 next-hop 10.0.3.2 # LB2B
 set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
+set protocols static route 192.1.1.0/24 next-hop 10.0.10.2 # LB3
 
 # NAT Translation
 set nat source rule 10 outbound-interface eth3
 set nat source rule 10 source address 10.0.0.0/8
 set nat source rule 10 translation address 192.1.0.16-192.1.0.31
 
-# Zone Definition (DMZ P/ FAZER)
+# Zone Definition
 set zone-policy zone INSIDE description "Inside (Internal Network)"
 set zone-policy zone INSIDE interface eth0
 set zone-policy zone INSIDE interface eth1
 set zone-policy zone OUTSIDE description "Outside (External Network)"
 set zone-policy zone OUTSIDE interface eth2
 set zone-policy zone OUTSIDE interface eth3
+set zone-policy zone DMZ description "DMZ (Server Farm)"
+set zone-policy zone DMZ interface eth4
 
 # Zone Policy
-
+(No Ponto 10)
 commit
 save
 ```
@@ -351,6 +359,7 @@ save
 
 Servidor DMZ (Por escrever):
 ```sql
+ip 192.1.1.100/24 192.1.1.1
 ```
 
 LB3 (*load balancer* DMZ - Por corrigir):
@@ -359,15 +368,18 @@ configure
 set system host-name LB3
 
 # Interfaces
-set interfaces ethernet eth0 address 10.1.1.11/24
-set interfaces ethernet eth1 address 10.0.1.11/24
-set interfaces ethernet eth2 address 10.0.6.1/24
-
-# Rotas Estáticas
-set protocols static route 10.2.2.0/24 next-hop 10.1.1.10 # R1
+set interfaces ethernet eth0 address 10.0.9.2/24
+set interfaces ethernet eth1 address 10.0.10.2/24
+set interfaces ethernet eth2 address 192.1.1.1/24
 
 # Load-Balancing
-
+set load-balancing wan interface-health eth0 nexthop 10.0.9.1
+set load-balancing wan interface-health eth1 nexthop 10.0.10.1
+set load-balancing wan rule 1 inbound-interface eth2
+set load-balancing wan rule 1 interface eth0 weight 1
+set load-balancing wan rule 1 interface eth1 weight 1
+set load-balancing wan sticky-connections inbound
+set load-balancing wan disable-source-nat
 commit
 save
 ```
