@@ -13,13 +13,14 @@
    1. Rotas de Rede e conectividade;
    2. Load-Balancers;
    3. Sincronização de Estados de Dispositivos;
-   4. Questões Finais;
+   4. Testes de Funcionamento (Ana e Simão);
+   5. Questões Finais;
 5. Ponto 10:
    1. Configuração do Servidor DMZ;
    2. Configuração da Firewall;
    3. Zonas e Regras;
-6. Testes de Funcionamento (Ana e Simão)
-7. Conclusão;
+   4. Testes de Funcionamento (Ana e Simão)
+6. Conclusão;
 
 ## Introdução
 
@@ -368,6 +369,17 @@ commit
 save
 ```
 
+### Testes de Funcionamento (Ana e Simão)
+
+> [!IMPORTANT]
+> Descrever os testes de funcionamento realizados e os resultados obtidos.
+
+A realizar:
+- [ ] Testar a conectividade entre os computadores internos e externos.
+- [ ] Verificar a distribuição de carga de tráfego entre os *load balancers*.
+- [ ] Verificar a tabela de rotas dos *routers* e dos *load balancers*.
+- [ ] Verificar a tradução NAT dos endereços IP.
+
 ### Questões finais
 
 **1. Explain why the synchronization of the load-balancers allows the nonexistence of firewall synchronization.**
@@ -572,7 +584,16 @@ set zone-policy zone INSIDE from DMZ firewall name ESTABLISHED
 
 > Ou seja, todo o tráfego para o exterior e para o DMZ (por conta de ser uma zona isolada) é filtrado, enquanto o tráfego restante é estabelecido por regras já existentes.
 
-## Testes de Funcionamento (Ana e Simão)
+### Testes de Funcionamento (Ana e Simão)
+
+> [!IMPORTANT]
+> Descrever os testes de funcionamento realizados e os resultados obtidos.
+
+A realizar:
+- [ ] Testar a conectividade entre as zonas;
+- [ ] Verificar se as regras de controlo de tráfego estão a ser aplicadas corretamente;
+- [ ] Testar a limitação de tráfego para o servidor DMZ;
+- [ ] Exibir os logs de tráfego das firewalls;
 
 ## Conclusão 
 
