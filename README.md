@@ -52,9 +52,9 @@ Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | D_01   | A rede interna irá receber apenas o tráfego estabelecido por esta, bloqueando todo o tráfego não solicitado.                          |
 | D_02   | As comunicações para a rede exterior serão apenas permitidas para continuidade de serviços (e.g. acesso remoto a serviços, internet). |
-| D_03   | O tráfego para a rede interna e DMZ deverá ter proteção contra ataques DDoS (*Distributed Denial of Service*).                        |
-| D_04   | O acesso à DMZ será permitido apenas durante o horário laboral.                                                                       |
-| D_05   | O tráfego para endereços privados será bloqueado.                                                                                     |
+| D_03   | A rede interna e a DMZ deverão ser capazes de manter a sua disponibilidade e conseguir gerir todos os pedidos recebidos.              |
+| D_04   | O acesso ao servidor DMZ será permitido apenas durante o horário laboral.                                                             |
+| D_05   | O exterior não deverá ser capaz de comunicar diretamente com a rede interna.                                                          |
 
 ## Ponto 9
 
