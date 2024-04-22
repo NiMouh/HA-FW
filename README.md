@@ -48,13 +48,13 @@ A política de segurança deve priorizar a proteção dos recursos da rede, gara
 
 Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem implementadas:
 
-| Código | Descrição                                                                                                      |
-| ------ | -------------------------------------------------------------------------------------------------------------- |
-| D_01   | A rede interna irá receber apenas o tráfego estabelecido por esta, bloqueando todo o tráfego não solicitado.   |
-| D_02   | As comunicações para a rede externa serão apenas permitidas usando protocolos especificados.                   |
-| D_03   | O tráfego para a rede interna e DMZ deverá ter proteção contra ataques DDoS (*Distributed Denial of Service*). |
-| D_04   | O acesso à DMZ será permitido apenas durante o horário laboral.                                                |
-| D_05   | O tráfego para endereços privados será bloqueado.                                                              |
+| Código | Descrição                                                                                                                             |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| D_01   | A rede interna irá receber apenas o tráfego estabelecido por esta, bloqueando todo o tráfego não solicitado.                          |
+| D_02   | As comunicações para a rede exterior serão apenas permitidas para continuidade de serviços (e.g. acesso remoto a serviços, internet). |
+| D_03   | O tráfego para a rede interna e DMZ deverá ter proteção contra ataques DDoS (*Distributed Denial of Service*).                        |
+| D_04   | O acesso à DMZ será permitido apenas durante o horário laboral.                                                                       |
+| D_05   | O tráfego para endereços privados será bloqueado.                                                                                     |
 
 ## Ponto 9
 
