@@ -416,7 +416,7 @@ As rotas de rede foram verificadas nos *routers* e nos *load balancers* para gar
 
 <div style="display: flex; justify-content: center;">
   <img src="img/route-r1.png" alt="Tabela de rotas do R1" width="500" style="margin-right: 10px;"/>
-  <img src="img/route-r1.png" alt="Tabela de rotas do R2" width="500"/>
+  <img src="img/route-r2.png" alt="Tabela de rotas do R2" width="500"/>
 </div>
 
 <p align="center">
