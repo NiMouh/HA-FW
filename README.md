@@ -473,7 +473,7 @@ Como podemos verificar pelas tabelas de tradução NAT, os endereços IP dos com
   <i> Fig. 8 - Topologia da rede com a DMZ </i>
 </p>
 
-Servidor DMZ (Por escrever):
+Servidor DMZ:
 ```sql
 ip 192.1.1.100/24 192.1.1.1
 save
@@ -481,7 +481,7 @@ save
 
 > A DMZ (*Demilitarized Zone*) é uma sub-rede isolada que separa a rede interna da rede externa, permitindo que os servidores públicos sejam acessíveis a partir da Internet, mas não diretamente da rede interna.
 
-LB3 (*load balancer* DMZ - Por corrigir):
+LB3 (*load balancer* DMZ):
 ```sql
 configure
 set system host-name LB3
