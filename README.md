@@ -48,20 +48,20 @@ A política de segurança deve priorizar a proteção dos recursos da rede, gara
 
 Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem implementadas:
 
-| Código | Descrição                                                                                                    |
-| ------ | ------------------------------------------------------------------------------------------------------------ |
-| D_01   | A rede interna irá receber apenas o tráfego estabelecido por esta, bloqueando todo o tráfego não solicitado. |
-| D_02   | As comunicações para a rede externa serão apenas permitidas usando protocolos especificados.                 |
-| D_03   | O tráfego para a DMZ deverá ser limitado, evitando ataques DDoS (*Distributed Denial of Service*).           |
-| D_04   | O acesso à DMZ será permitido apenas durante o horário laboral.                                              |
-| D_05   | O tráfego para endereços privados será bloqueado.                                                            |
+| Código | Descrição                                                                                                      |
+| ------ | -------------------------------------------------------------------------------------------------------------- |
+| D_01   | A rede interna irá receber apenas o tráfego estabelecido por esta, bloqueando todo o tráfego não solicitado.   |
+| D_02   | As comunicações para a rede externa serão apenas permitidas usando protocolos especificados.                   |
+| D_03   | O tráfego para a rede interna e DMZ deverá ter proteção contra ataques DDoS (*Distributed Denial of Service*). |
+| D_04   | O acesso à DMZ será permitido apenas durante o horário laboral.                                                |
+| D_05   | O tráfego para endereços privados será bloqueado.                                                              |
 
 ## Ponto 9
 
 ### Topologia
 
 <p align="center">
-  <img src="image.png" alt="Topologia" width="1000"/>
+  <img src="img/topology-2.png" alt="Topologia" width="1000"/>
 </p>
 <p align="center">
   <i> Fig. 1 - Topologia da rede </i>
@@ -297,6 +297,8 @@ commit
 save
 ```
 
+> Não é necessário a definição de rotas estáticas, pois o *next-hop* já está definido nas configurações de *load balancing*.
+
 #### FW1 (*firewall* superior):
 ```sql
 configure
@@ -317,9 +319,12 @@ set protocols static route 0.0.0.0/0 next-hop 10.0.7.2 # LB2B
 set protocols static route 192.1.1.0/24 next-hop 10.0.9.2 # LB3
 
 # NAT Translation
-set nat source rule 10 outbound-interface eth2
+set nat source rule 10 outbound-interface eth2 # LB2A
 set nat source rule 10 source address 10.0.0.0/8
-set nat source rule 10 translation address 192.1.0.1-192.1.0.15
+set nat source rule 10 translation address 192.1.0.1-192.1.0.10
+set nat source rule 20 outbound-interface eth3 # LB2B
+set nat source rule 20 source address 10.0.0.0/8
+set nat source rule 20 translation address 192.1.0.11-192.1.0.21
 
 # Zone Definition
 (No Ponto 10)
@@ -331,9 +336,11 @@ commit
 save
 ```
 
+> Temos uma rota estática para cada *load balancer*, de forma a que caso um deles falhe, o tráfego seja encaminhado para o outro.
+
 > O NAT (*Network Address Translation*) é uma técnica utilizada para traduzir endereços IP e portas de um endereço para outro, permitindo que os dispositivos de uma rede privada comuniquem com dispositivos de uma rede pública. O NAT é utilizado para proteger a rede interna de ataques externos, ocultando os endereços IP privados dos dispositivos internos e permitindo que estes comuniquem com a rede externa através de um único endereço IP público.
 > 
-> Apenas é necessário definir uma interface de saída para o NAT (*outbound-interface*), uma vez que as *firewalls* estão ligadas aos *load balancers* conectados à rede externa.
+> É necessário definir uma regra por interface de saída para o NAT (*outbound-interface*), especificando o intervalo de endereços IP a serem traduzidos (*translation address*).
 
 #### FW2 (*firewall* inferior):
 ```sql
@@ -355,9 +362,13 @@ set protocols static route 0.0.0.0/0 next-hop 10.0.8.2 # LB2A
 set protocols static route 192.1.1.0/24 next-hop 10.0.10.2 # LB3
 
 # NAT Translation
-set nat source rule 10 outbound-interface eth3
+set nat source rule 10 outbound-interface eth3 # LB2B
 set nat source rule 10 source address 10.0.0.0/8
-set nat source rule 10 translation address 192.1.0.16-192.1.0.31
+set nat source rule 10 translation address 192.1.0.22-192.1.0.32
+set nat source rule 20 outbound-interface eth2 # LB2A
+set nat source rule 20 source address 10.0.0.0/8
+set nat source rule 20 translation address 192.1.0.33-192.1.0.43
+
 
 # Zone Definition
 (No Ponto 10)
@@ -369,16 +380,74 @@ commit
 save
 ```
 
+> É necessário definir uma *pool* de endereços IP para a tradução NAT diferentes para cada interface pois as *firewalls* não estão sincronizadas.
+
 ### Testes de Funcionamento (Ana e Simão)
 
 > [!IMPORTANT]
 > Descrever os testes de funcionamento realizados e os resultados obtidos.
 
 A realizar:
-- [ ] Testar a conectividade entre os computadores internos e externos.
-- [ ] Verificar a distribuição de carga de tráfego entre os *load balancers*.
-- [ ] Verificar a tabela de rotas dos *routers* e dos *load balancers*.
-- [ ] Verificar a tradução NAT dos endereços IP.
+- [x] Testar a conectividade entre os computadores internos e externos.
+- [ ] Verificar a distribuição de carga de tráfego entre os *load balancers* (comandos que enviei para o discord).
+- [x] Verificar a tabela de rotas dos *routers* e dos *load balancers*.
+- [x] Verificar a tradução NAT dos endereços IP.
+
+Para testar a conectividade entre os computadores internos e externos, foi utilizado o comando `ping 200.2.2.100 -P 17 -p 5001` que envia pacotes UDP para o computador externo.
+
+<p align="center">
+  <img src="img/wireshark-1.png" alt="Ping" width="1000"/>
+</p>
+<p align="center">
+  <i> Fig. 2 - Captura Wireshark entre a rede interna e a rede externa com filtragem para o protocolo UDP. </i>
+</p>
+
+Também foi feito o mesmo teste, mas com o protocolo ICMP, para verificar se a conexão é estabelecida corretamente (`ping 200.2.2.100`).
+
+<p align="center">
+  <img src="img/wireshark-2.png" alt="Ping" width="1000"/>
+</p>
+<p align="center">
+  <i> Fig. 3 - Captura Wireshark entre a rede interna e a rede externa com filtragem para o protocolo ICMP. </i>
+</p>
+
+As rotas de rede foram verificadas nos *routers* e nos *load balancers* para garantir que o tráfego é encaminhado corretamente para os destinos pretendidos.
+
+<div style="display: flex; justify-content: center;">
+  <img src="img/route-r1.png" alt="Tabela de rotas do R1" width="500" style="margin-right: 10px;"/>
+  <img src="img/route-r1.png" alt="Tabela de rotas do R2" width="500"/>
+</div>
+
+<p align="center">
+  <i> Fig. 4 - Tabela de rotas do R1 e R2 </i>
+</p>
+
+<div style="display: flex; justify-content: center;">
+  <img src="img/route-lb1a.png" alt="Tabela de rotas do LB1A" width="500" style="margin-right: 10px;"/>
+  <img src="img/route-lb1b.png" alt="Tabela de rotas do LB1B" width="500"/>
+</div>
+
+<p align="center">
+  <i> Fig. 5 - Tabela de rotas do LB1A e LB1B </i>
+</p>
+
+<div style="display: flex; justify-content: center;">
+  <img src="img/route-lb2a.png" alt="Tabela de rotas do LB2A" width="500" style="margin-right: 10px;"/>
+  <img src="img/route-lb2b.png" alt="Tabela de rotas do LB2B" width="500"/>
+</div>
+
+<p align="center">
+  <i> Fig. 6 - Tabela de rotas do LB2A e LB2B </i>
+</p>
+
+Como podemos verificar pelas tabelas de tradução NAT, os endereços IP dos computadores internos foram traduzidos para endereços IP públicos.
+
+<p align="center">
+  <img src="img/nat-translation.png" alt="Tabela de tradução NAT" width="500"/>
+</p>
+<p align="center">
+  <i> Fig. 7 - VyOS NAT Translation </i>
+</p>
 
 ### Questões finais
 
@@ -397,10 +466,10 @@ A realizar:
 ## Ponto 10
 
 <p align="center">
-  <img src="image-1.png" alt="Topologia" width="1000"/>
+  <img src="img/topology-1.png" alt="Topologia" width="1000"/>
 </p>
 <p align="center">
-  <i> Fig. 2 - Topologia da rede com a DMZ </i>
+  <i> Fig. 8 - Topologia da rede com a DMZ </i>
 </p>
 
 Servidor DMZ (Por escrever):
@@ -451,6 +520,8 @@ set zone-policy zone DMZ description "DMZ (Server Farm)"
 set zone-policy zone DMZ interface eth4
 ```
 
+> Após inserir estas configurações, a conectividade é afetada, uma vez que o tráfego entre as zonas é bloqueado por padrão. Para permitir o tráfego entre as zonas, é necessário definir regras de controlo de tráfego.
+
 ### Descrição da Configuração
 
 Para limitar o acesso à rede, as seguintes ACLs foram implementadas nas *firewalls*:
@@ -461,6 +532,8 @@ set firewall name ESTABLISHED default-action drop
 ```
 
 > A lista de acessos `CONTROLLED` é utilizada para definir as regras de controlo de tráfego (o que pode ou não passar), enquanto a lista `ESTABLISHED` é utilizada para definir as regras de tráfego já estabelecido.
+>
+> Por padrão, todo o tráfego é bloqueado, sendo necessário definir regras para permitir o tráfego entre as zonas.
 
 ### Regras entre Zonas
 
@@ -504,18 +577,11 @@ set firewall name CONTROLLED rule 14 action accept
 set firewall name CONTROLLED rule 14 protocol icmp
 set firewall name CONTROLLED rule 14 destination address 0.0.0.0/0
 
-set firewall name CONTROLLED rule 15 description "Accept DNS TCP" # DNS traffic
+set firewall name CONTROLLED rule 15 description "Accept DNS TCP/UDP" # DNS traffic
 set firewall name CONTROLLED rule 15 action accept
-set firewall name CONTROLLED rule 15 protocol tcp
+set firewall name CONTROLLED rule 15 protocol tcp_udp
 set firewall name CONTROLLED rule 15 destination address 0.0.0.0/0
 set firewall name CONTROLLED rule 15 destination port 53
-
-set firewall name CONTROLLED rule 16 description "Accept DNS UDP" # DNS traffic
-set firewall name CONTROLLED rule 16 action accept
-set firewall name CONTROLLED rule 16 protocol udp
-set firewall name CONTROLLED rule 16 destination address 0.0.0.0/0
-set firewall name CONTROLLED rule 16 destination port 53
-
 
 # Regra 2 - Conexões já estabelecidas
 set firewall name ESTABLISHED rule 20 description "Accept Established-Related Connections"
@@ -562,10 +628,10 @@ save
 Nas *firewalls* `FW1` e `FW2`, as regras foram aplicadas da seguinte forma:
 
 <p align="center">
-  <img src="Zone_Policy.png" alt="Zone Policy" width="700"/>
+  <img src="img/Zone_Policy.png" alt="Zone Policy" width="700"/>
 </p>
 <p align="center">
-  <i> Fig. 3 - Diagrama de aplicação das ACLs </i>
+  <i> Fig. 9 - Diagrama de aplicação das ACLs </i>
 </p>
 
 ```sql
@@ -591,9 +657,9 @@ set zone-policy zone INSIDE from DMZ firewall name ESTABLISHED
 
 A realizar:
 - [ ] Testar a conectividade entre as zonas;
-- [ ] Verificar se as regras de controlo de tráfego estão a ser aplicadas corretamente;
+- [ ] Verificar se as regras de controlo de tráfego estão a ser aplicadas corretamente (e.g. Conectar-se ao servidor DMZ dentro e fora do horário laboral);
 - [ ] Testar a limitação de tráfego para o servidor DMZ;
-- [ ] Exibir os logs de tráfego das firewalls;
+- [ ] Exibir os logs de tráfego das firewalls (`show log firewall name <ACL>`).;
 
 ## Conclusão 
 
