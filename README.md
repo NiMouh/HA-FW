@@ -607,6 +607,8 @@ Lista de regras entre zonas:
 5. Permitir acesso ao servidor DMZ apenas em horário laboral (9h-18h);
 6. Limitar o envio de pacotes SYN para 100 por segundo;
 
+> [!IMPORTANT]
+> Adicionalmente, acrescentar um VPCS à rede interna (com por exemplo ip de 10.2.2.200), este será o administrador da rede só ele poderá aceder ao servidor DMZ com o protocolo SSH.
 
 Nas *firewalls* `FW1` e `FW2`, as regras assim definidas:
 
