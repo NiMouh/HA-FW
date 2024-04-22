@@ -608,7 +608,7 @@ Lista de regras entre zonas:
 6. Limitar o envio de pacotes SYN para 100 por segundo;
 
 > [!IMPORTANT]
-> Adicionalmente, acrescentar um VPCS à rede interna (com por exemplo ip de 10.2.2.200), este será o administrador da rede só ele poderá aceder ao servidor DMZ com o protocolo SSH.
+> Adicionalmente, acrescentar um VPCS à rede interna (com por exemplo ip de 10.2.2.200), este será o administrador da rede só ele poderá aceder ao servidor DMZ com o protocolo SSH (implementar isto, modificando a regra 13).
 
 Nas *firewalls* `FW1` e `FW2`, as regras assim definidas:
 
