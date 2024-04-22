@@ -390,6 +390,7 @@ save
 A realizar:
 - [x] Testar a conectividade entre os computadores internos e externos.
 - [ ] Verificar a distribuição de carga de tráfego entre os *load balancers* (comandos que enviei para o discord).
+- [ ] Verificar a sincronização de estados entre os *load balancers* (comandos que enviei para o discord).
 - [x] Verificar a tabela de rotas dos *routers* e dos *load balancers*.
 - [x] Verificar a tradução NAT dos endereços IP.
 
