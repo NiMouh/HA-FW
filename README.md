@@ -382,17 +382,9 @@ save
 
 > É necessário definir uma *pool* de endereços IP para a tradução NAT diferentes para cada interface pois as *firewalls* não estão sincronizadas.
 
-### Testes de Funcionamento (Ana e Simão)
+### Testes de Funcionamento
 
-> [!IMPORTANT]
-> Descrever os testes de funcionamento realizados e os resultados obtidos.
-
-A realizar:
-- [x] Testar a conectividade entre os computadores internos e externos.
-- [ ] Verificar a distribuição de carga de tráfego entre os *load balancers* (comandos que enviei para o discord).
-- [ ] Verificar a sincronização de estados entre os *load balancers* (comandos que enviei para o discord).
-- [x] Verificar a tabela de rotas dos *routers* e dos *load balancers*.
-- [x] Verificar a tradução NAT dos endereços IP.
+#### Conectividade na rede
 
 Para testar a conectividade entre os computadores internos e externos, foi utilizado o comando `ping 200.2.2.100 -P 17 -p 5001` que envia pacotes UDP para o computador externo.
 
@@ -411,6 +403,8 @@ Também foi feito o mesmo teste, mas com o protocolo ICMP, para verificar se a c
 <p align="center">
   <i> Fig. 3 - Captura Wireshark entre a rede interna e a rede externa com filtragem para o protocolo ICMP. </i>
 </p>
+
+#### Verificação de rotas
 
 As rotas de rede foram verificadas nos *routers* e nos *load balancers* para garantir que o tráfego é encaminhado corretamente para os destinos pretendidos.
 
@@ -441,6 +435,8 @@ As rotas de rede foram verificadas nos *routers* e nos *load balancers* para gar
   <i> Fig. 6 - Tabela de rotas do LB2A e LB2B </i>
 </p>
 
+#### Teste de tradução NAT
+
 Como podemos verificar pelas tabelas de tradução NAT, os endereços IP dos computadores internos foram traduzidos para endereços IP públicos.
 
 <p align="center">
@@ -449,6 +445,69 @@ Como podemos verificar pelas tabelas de tradução NAT, os endereços IP dos com
 <p align="center">
   <i> Fig. 7 - VyOS NAT Translation </i>
 </p>
+
+#### Testes de sincronização dos *load balancers*
+
+Usando o Wireshark na interface `eth3` entre os *load balancers* superior e inferior, foi possível verificar a troca de pacotes VRRP (Virtual Router Redundancy Protocol) que permite que os *load balancers* compartilhem um único endereço IP virtual garantindo a disponibilidade dos serviços.
+
+<p align="center">
+  <img src="img/wireshark-3.png" alt="Wireshark" width="1000"/>
+</p>
+<p align="center">
+  <i> Fig. 8 - Captura Wireshark entre os Load Balancers 1A e 1B </i>
+</p>
+
+De modo a analisar o seguimento das conexões sincronizadas entre os *load balancers*, utilizamos o comando `show conntrack table ipv4` para visualizar as conexões ativas.
+
+<p align="center">
+  <img src="img/lb-connections.png" alt="Tabela de conexões" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 8 - Tabela de conexões ativas </i>
+</p>
+
+> Este comando também serve para confirmar que o conntrack encontra-se habilitado e a funcionar corretamente.
+
+Além disso, foi utilizado o comando `show conntrack-sync statistics` que mostra quais as conexões *conntrack* que encontram-se ativas entre os *load balancers*.
+
+<p align="center">
+  <img src="img/stats-connections.png" alt="Estatísticas de conexões" width="600"/>
+</p>
+<p align="center">
+  <i> Fig. 9 - Conexões conntrack ativas do Load Balancer 1A</i>
+</p>
+
+Podemos também verificar através do comando `ip route` que existe uma rota virtual configurada para o *load balancer* superior e inferior (`eth3v0`). Esta rota é utilizada para encaminhar o tráfego para o *load balancer* principal, que por sua vez encaminha o tráfego para os servidores.
+
+<p align="center">
+  <img src="img/virtual-address.png" alt="Rota virtual" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 10 - Rotas do Load Balancer 1A</i>
+</p>
+
+E por último foi utilizado o comando `show conntrack-sync internal-cache` que mostra as conexões *conntrack* que encontram-se armazenas na cache do *load balancer*.
+
+<p align="center">
+  <img src="img/cache-connections.png" alt="Cache de conexões" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 10 - Cache de conexões conntrack do Load Balancer 1A</i>
+</p>
+
+> Estas conexões são armazenadas na cache por motivos de performance, de modo a que seja reduzido o acesso a informação por dispositivos externos.
+
+#### Testes de distribuição de carga
+
+Como podemos verificar através do comando `sudo iptables -vL -t mangle`, o tráfego é distribuído de forma equitativa (mais ou menos) entre as portas do *load balancer*.
+
+<p align="center">
+  <img src="img/distribution.png" alt="Distribuição de carga" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 11 - Distribuição de carga entre os Load Balancers 1A </i>
+</p>
+
 
 ### Questões finais
 
@@ -607,6 +666,7 @@ set firewall name CONTROLLED rule 50 action accept
 set firewall name CONTROLLED rule 50 state new enable
 set firewall name CONTROLLED rule 50 time starttime 09:00:00
 set firewall name CONTROLLED rule 50 time stoptime 18:00:00
+set firewall name CONTROLLED rule 50 time utc
 set firewall name CONTROLLED rule 50 destination address 192.1.1.0/24
 
 
@@ -629,7 +689,7 @@ save
 Nas *firewalls* `FW1` e `FW2`, as regras foram aplicadas da seguinte forma:
 
 <p align="center">
-  <img src="img/Zone_Policy.png" alt="Zone Policy" width="700"/>
+  <img src="img/Zone_Policy.png" alt="Zone Policy" width="400"/>
 </p>
 <p align="center">
   <i> Fig. 9 - Diagrama de aplicação das ACLs </i>
