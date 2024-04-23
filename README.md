@@ -600,15 +600,13 @@ set firewall name ESTABLISHED default-action drop
 Foram escolhidas um conjunto de regras para implementar nas firewalls, de forma a garantir a segurança e a integridade da rede mitigando ataques comuns à rede (e.g SYN Flood na regra `6`, DDoS na regra `4`).
 
 Lista de regras entre zonas:
-1. Permitir tráfego de saída do INSIDE dos seguintes protocolos: TCP, UDP, ICMP, SSH, HTTP, DNS e HTTPS;
+1. Permitir tráfego de saída do INSIDE dos seguintes protocolos: TCP, UDP, ICMP, HTTP, DNS e HTTPS;
 2. Permitir tráfego já estabelecido pelo INSIDE;
 3. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados (ip privado: 10.2.2.0/24);
 4. Limitar o tráfego de rede para o servidor DMZ (porta 4 das FWs) para 25 Mbps;
 5. Permitir acesso ao servidor DMZ apenas em horário laboral (9h-18h);
 6. Limitar o envio de pacotes SYN para 100 por segundo;
-
-> [!IMPORTANT]
-> Adicionalmente, acrescentar um VPCS à rede interna (com por exemplo ip de 10.2.2.200), este será o administrador da rede só ele poderá aceder ao servidor DMZ com o protocolo SSH (implementar isto, modificando a regra 13).
+7. Limitar o acesso ao DMZ por protocolo SSH apenas ao administrador da rede (ip 10.2.2.200).
 
 Nas *firewalls* `FW1` e `FW2`, as regras assim definidas:
 
@@ -628,11 +626,10 @@ set firewall name CONTROLLED rule 12 protocol tcp
 set firewall name CONTROLLED rule 12 destination address 0.0.0.0/0
 set firewall name CONTROLLED rule 12 destination port 443
 
-set firewall name CONTROLLED rule 13 description "Accept SSH" # SSH traffic
+set firewall name CONTROLLED rule 13 description "Accept UDP" # UDP traffic
 set firewall name CONTROLLED rule 13 action accept
-set firewall name CONTROLLED rule 13 protocol tcp
+set firewall name CONTROLLED rule 13 protocol udp
 set firewall name CONTROLLED rule 13 destination address 0.0.0.0/0
-set firewall name CONTROLLED rule 13 destination port 22
 
 set firewall name CONTROLLED rule 14 description "Accept ICMP" # ICMP traffic
 set firewall name CONTROLLED rule 14 action accept
@@ -671,7 +668,6 @@ set firewall name CONTROLLED rule 50 time stoptime 18:00:00
 set firewall name CONTROLLED rule 50 time utc
 set firewall name CONTROLLED rule 50 destination address 192.1.1.0/24
 
-
 # Regra 6 - Mitigação de SYN Flood
 set firewall name CONTROLLED rule 60 description "SYN Flood Protection"
 set firewall name CONTROLLED rule 60 action drop
@@ -679,6 +675,14 @@ set firewall name CONTROLLED rule 60 protocol tcp
 set firewall name CONTROLLED rule 60 state new enable
 set firewall name CONTROLLED rule 60 tcp flags 'SYN'
 set firewall name CONTROLLED rule 60 limit rate 100/second
+
+# Regra 7 - Acesso SSH ao servidor DMZ
+set firewall name CONTROLLED rule 70 description "Allow SSH Access to DMZ from Admin"
+set firewall name CONTROLLED rule 70 action accept
+set firewall name CONTROLLED rule 70 protocol tcp
+set firewall name CONTROLLED rule 70 source address 10.2.2.200 # Admin IP
+set firewall name CONTROLLED rule 70 destination address 192.1.1.0/24
+set firewall name CONTROLLED rule 70 destination port 22
 
 commit
 save
