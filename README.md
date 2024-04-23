@@ -713,16 +713,76 @@ set zone-policy zone INSIDE from DMZ firewall name ESTABLISHED
 
 > Ou seja, todo o tráfego para o exterior e para o DMZ (por conta de ser uma zona isolada) é filtrado, enquanto o tráfego restante é estabelecido por regras já existentes.
 
-### Testes de Funcionamento (Ana e Simão)
+### Testes de Funcionamento
+
+#### Teste de Conectividade entre Zonas
+
+Para testar a conectividade entre as zonas, foram enviados pacotes ICMP do computador interno para o externo e vice-versa.
+
+<p align="center">
+  <img src="img/wireshark-4.png" alt="Captura de ecrã do teste de conectividade entre zonas" width="900"/>
+</p>
+<p align="center">
+  <i> Fig. 10 - Captura de ecrã do teste de conectividade entre INSIDE-OUTSIDE </i>
+</p>
+
+> Deste modo, podemos verificar que os pedidos provenientes do INSIDE não são bloqueados pela firewall, uma vez que a regra `1` permite o tráfego de saída do INSIDE para o OUTSIDE através do protocolo ICMP.
+
+<p align="center">
+  <img src="img/wireshark-5.png" alt="Captura de ecrã do teste de conectividade entre zonas" width="900"/>
+</p>
+<p align="center">
+  <i> Fig. 11 - Captura de ecrã do teste de conectividade entre OUTSIDE-INSIDE </i>
+</p>
+
+> Como podemos verificar, os pedidos provenientes do OUTSIDE são bloqueados pela firewall, uma vez que a regra `3` bloqueia o tráfego de saída do OUTSIDE para os endereços IP privados.
+
+<p align="center">
+  <img src="img/firewall-log1.png" alt="Log da firewall" width="900"/>
+</p>
+<p align="center">
+  <i> Fig. 12 - Log da firewall </i>
+</p>
+
+> Através do comando `show log firewall name ESTABLISHED`, podemos verificar que a regra de tráfego `ESTABLISHED` está a ser aplicada corretamente e todos os pacotes que não foram estabelecidos pela rede interna são bloqueados.
+
+#### Verificação de regra de tráfego (`SYN Flood Protection`)
+
+De modo a verificar se a regra de tráfego `SYN Flood Protection` está a ser aplicada corretamente, foi adicionado uma máquina virtual com a distribuição Ubuntu ao INSIDE da rede (`10.2.2.200`), onde a mesma irá enviar pacotes SYN para o servidor DMZ.
+
+<p align="center">
+  <img src="img/topology-3.png" alt="Topologia com máquina virtual linux" width="900"/>
+</p>
+<p align="center">
+  <i> Fig. 13 - Topologia com máquina virtual linux </i>
+</p>
+
+Através do comando `iperf -c 192.1.1.100 -b 26m`, foi possível enviar pacotes SYN para o servidor DMZ.
+
+<p align="center">
+  <img src="img/tcp-requests.png" alt="Envio de pedidos TCP" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 14 - Envio de pedidos TCP</i>
+</p>
+
+> Os resultados foram guardados num ficheiro e exibidos através do comando `cat <ficheiro>`. É de observar que a conexão foi bloqueada após atingir o limite de pacotes SYN por segundo.
+
+Para verificar se a regra de tráfego `SYN Flood Protection` está a ser aplicada corretamente, foi utilizado o comando `show log firewall name CONTROLLED` para exibir os logs de tráfego da firewall.
+
+<p align="center">
+  <img src="img/firewall-log2.png" alt="Logs da firewall VyOS" width="700"/>
+</p>
+<p align="center">
+  <i> Fig. 15 - Logs da firewall VyOS</i>
+</p>
+
+> Como podemos verificar, a regra de tráfego `SYN Flood Protection` está a ser aplicada corretamente.
+
+## Extra
 
 > [!IMPORTANT]
-> Descrever os testes de funcionamento realizados e os resultados obtidos.
-
-A realizar:
-- [ ] Testar a conectividade entre as zonas;
-- [ ] Verificar se as regras de controlo de tráfego estão a ser aplicadas corretamente (e.g. Conectar-se ao servidor DMZ dentro e fora do horário laboral);
-- [ ] Testar a limitação de tráfego para o servidor DMZ;
-- [ ] Exibir os logs de tráfego das firewalls (`show log firewall name <ACL>`).;
+> Fazer o extra. Describe the configuration and operational tests of a network with redundant load-balancers and firewalls.
 
 ## Conclusão 
 
