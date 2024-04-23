@@ -785,8 +785,61 @@ Para verificar se a regra de tráfego `SYN Flood Protection` está a ser aplicad
 
 ## Extra
 
-> [!IMPORTANT]
-> Fazer o extra. Describe the configuration and operational tests of a network with redundant load-balancers and firewalls.
+Como medida para mitigar os ataques DDoS, foi criado um script que permite adicionar uma lista de endereços IP de atacantes a uma lista de bloqueio nas firewalls, automatizando o processo. O script utiliza a biblioteca `paramiko` para estabelecer uma conexão SSH com as firewalls e adicionar as regras de bloqueio.
+
+```python
+import paramiko
+
+def add_block_rule(firewall_ip_address, ip_address):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    username = "vyos"
+    password = "vyos"
+    hostname = firewall_ip_address
+    port = 22 # SSH port
+    
+    try:
+        ssh.connect(hostname, port, username, password)
+        
+        command = f"sudo iptables -A INPUT -s {ip_address} -j DROP"
+        
+        stdin, stdout, stderr = ssh.exec_command(command)
+        
+        if stderr.channel.recv_exit_status() != 0: # Error
+            print(f"Error occurred: {stderr.read().decode()}")
+        else:
+            print(f"Blocking rule added for {ip_address}")
+        
+        ssh.close()
+
+    except Exception as e:
+        print(f"Error connecting to firewall: {e}")
+
+def main(firewall : str, blocklist : str):
+    with open(blocklist, "r") as file:
+        attackers = file.readlines()
+        for attacker in attackers:
+          add_block_rule(firewall, attacker)
+    print("Blocking list added successfully to the " + firewall + " firewall.")
+
+if __name__ == "__main__":
+
+    if len(sys.argv) < 3:
+        print("Usage: python3 block_attackers.py <firewall_ip_address> <attackers_file>")
+        sys.exit(1)
+    
+    firewall_ip = sys.argv[1]
+    blocklist_filepath = sys.argv[2]
+
+    main(firewall_ip, blocklist_filepath)
+```
+
+Exemplo de utilização:
+```bash
+$ python3 block_attackers.py 10.0.10.1 /etc/ddos_blocklist.txt
+```
+
 
 ## Conclusão 
 
