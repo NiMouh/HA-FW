@@ -8,18 +8,18 @@
 
 1. Introdução;
 2. Objetivos;
-3. Política de segurança (Simão);
+3. Política de segurança;
 4. Ponto 9:
    1. Rotas de Rede e conectividade;
    2. Load-Balancers;
    3. Sincronização de Estados de Dispositivos;
-   4. Testes de Funcionamento (Ana e Simão);
+   4. Testes de Funcionamento;
    5. Questões Finais;
 5. Ponto 10:
    1. Configuração do Servidor DMZ;
    2. Configuração da Firewall;
    3. Zonas e Regras;
-   4. Testes de Funcionamento (Ana e Simão)
+   4. Testes de Funcionamento;
 6. Conclusão;
 
 ## Introdução
