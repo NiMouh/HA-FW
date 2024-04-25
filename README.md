@@ -23,11 +23,7 @@
 6. Conclusão;
 
 ## Introdução
-
-> [!TIP]
-> **Comentário**: O foco da introdução é apresentar o tema do trabalho, não é necessário falar sobre as ferramentas usadas (VyOS). Começar em que âmbito o trabalho foi feito, depois falar sobre a sincronização de estados, introduzir (NÃO DESENVOLVER MUITO) que existem prós-e-contras relativamente á sua implementação, depois falar sobre as firewalls (DE MODO BREVE) e explicar que para uma boa defesa de uma rede é necessário definir um conjunto de politicas de controlo de fluxo de tráfego, e que é isso que será feito no trabalho.
-
-Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os firewalls assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de firewalls de alta disponibilidade utilizando a plataforma VyOS. O VyOS é uma solução de código aberto reconhecida pela sua flexibilidade e recursos avançados de segurança. Focar-nos-emos na configuração de firewalls redundantes e na distribuição de carga de tráfego, com o propósito de garantir a disponibilidade contínua dos serviços de rede. Adicionalmente, iremos analisar a implementação de funcionalidades como o conntrack-sync, que permite a sincronização de estados de conexão entre os dispositivos de firewall, potenciando ainda mais a resiliência da infraestrutura de segurança.
+Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os *Firewalls* assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de *Firewalls* de alta disponibilidade utilizando a plataforma VyOS, seguindo um conjunto de politicas previamente definidas assegurando a confidencialidade e integridade da rede. Focar-nos-emos também na configuração de *Firewalls* e *Load Balancers* redundantes e na distribuição de carga de tráfego, de modo a garantir a disponibilidade contínua dos serviços de rede, avaliando os riscos associados a esta redundância. Adicionalmente, iremos implementar funcionalidades como a sincronização de estados, que permite a conexão entre os dispositivos de *Load Balancers*.
 
 ## Objetivos
 
