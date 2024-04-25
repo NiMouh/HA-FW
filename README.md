@@ -41,7 +41,7 @@ Temos as seguintes tarefas a serem realizadas:
 
 ## Política de Segurança
 
-A política de segurança deve priorizar a proteção dos recursos da rede, garantindo que apenas o tráfego necessário e seguro seja permitido e implementando medidas para mitigar possíveis ataques. 
+A política de segurança deve priorizar a proteção dos recursos da rede, garantindo que apenas o tráfego necessário, seguro e autorizado seja permitido e implementando medidas para mitigar possíveis ataques. 
 
 Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem implementadas:
 
