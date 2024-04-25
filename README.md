@@ -23,7 +23,8 @@
 6. Conclusão;
 
 ## Introdução
-Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os *Firewalls* assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de *Firewalls* de alta disponibilidade utilizando a plataforma VyOS, seguindo um conjunto de politicas previamente definidas assegurando a confidencialidade e integridade da rede. Focar-nos-emos também na configuração de *Firewalls* e *Load Balancers* redundantes e na distribuição de carga de tráfego, de modo a garantir a disponibilidade contínua dos serviços de rede, avaliando os riscos associados a esta redundância. Adicionalmente, iremos implementar funcionalidades como a sincronização de estados, que permite a conexão entre os dispositivos de *Load Balancers*.
+
+Nos dias de hoje, a continuidade operacional e a segurança das redes desempenham um papel crítico no ambiente empresarial. No âmbito da segurança cibernética, os *Firewalls* assumem uma importância inegável na proteção dos ativos e na defesa contra ameaças digitais. Este trabalho tem como objetivo explorar os cenários de *Firewalls* de alta disponibilidade utilizando o VyOS, seguindo um conjunto de politicas previamente definidas assegurando a confidencialidade e integridade da rede. Focar-nos-emos também na configuração de *Firewalls* e *Load Balancers* redundantes e na distribuição de carga de tráfego, de modo a garantir a disponibilidade contínua dos serviços de rede, avaliando os riscos associados a esta redundância. Adicionalmente, iremos implementar funcionalidades como a sincronização de estados, que permite a conexão entre os dispositivos de *Load Balancers*.
 
 ## Objetivos
 
@@ -840,11 +841,6 @@ $ python3 block_attackers.py 10.0.10.1 /etc/ddos_blocklist.txt
 
 ## Conclusão 
 
-> [!TIP]
-> **Comentário**: Muito genérico, falar o que foi aprendido e o que esse novo conhecimento pode trazer, exemplo: "A implementação de dois load-balancers permitiu perceber os riscos que a escolha de um algoritmo não adequado pode trazer para a integridade da rede". Falar sobre o conhecimento obtido na fase de testes e como procedemos á resolução dos problemas que encontramos. Falar o que irá ser melhorado em trabalhos futuros, seja organizacional ou técnico.
-
-Em síntese, a implementação de firewalls de alta disponibilidade é de suma importância para garantir a continuidade operacional e a segurança das redes empresariais. Através da plataforma VyOS, foram explorados diversos cenários de configuração com o intuito de maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar quatro load balancers, onde dois deles estão sincronizados entre si, e distribuir de forma equilibrada o tráfego entre eles, foi possível mitigar falhas de hardware e assegurar uma proteção contínua contra ameaças cibernéticas. Adicionalmente, a integração do conntrack-sync nos load balancers permitiu uma sincronização eficiente dos estados de conexão, contribuindo para uma resposta mais eficaz e robusta da infraestrutura de segurança.
-
-Por outro lado, ao conectar as duas firewalls aos load balancers, estabeleceu-se um ambiente de alta disponibilidade com redundância, onde cada firewall atua como um gateway seguro entre as duas zonas da rede: a outside e a inside. A utilização de rotas estáticas sincronizadas entre os load balancers garantiu uma distribuição eficiente da carga de trabalho e uma alta disponibilidade dos serviços em ambas as zonas.
-
-Este trabalho visa contribuir significativamente para a compreensão e implementação de firewalls de alta disponibilidade com a plataforma VyOS. 
+Em suma, a implementação de firewalls de alta disponibilidade desempenha um papel fundamental na salvaguarda da continuidade operacional e da segurança de uma infraestrutura de rede. A exploração do VyOS permitiu a análise de diversos cenários de configuração, visando maximizar a disponibilidade e a resiliência dos sistemas de segurança de rede. Ao configurar os quatro *Load Balancers*, com sincronização de estados, e distribuindo assim o tráfego de forma equilibrada, alcançámos a mitigação de vulnerabilidades e garantimos uma proteção contínua contra ameaças cibernéticas.
+Isto contribuiu para uma resposta mais eficaz e robusta da infraestrutura de segurança. Ao conectar as *Firewalls* aos *Load Balancers*, estabelecemos um ambiente de alta disponibilidade com redundância, onde cada firewall atua como um gateway seguro entre as zonas outside e inside da rede.
+Como aprendizagem adicional, destacamos a importância de testes de funcionamento abrangentes para validar a eficácia das configurações implementadas.
