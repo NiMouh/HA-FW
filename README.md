@@ -51,7 +51,7 @@ Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem
 | D_02   | As comunicações para a rede exterior serão apenas permitidas para continuidade de serviços (e.g. acesso remoto a serviços, internet). |
 | D_03   | A rede interna e a DMZ deverão ser capazes de manter a sua disponibilidade e conseguir gerir todos os pedidos recebidos.              |
 | D_04   | O acesso ao servidor DMZ será permitido apenas durante o horário laboral.                                                             |
-| D_05   | O exterior não deverá ser capaz de comunicar diretamente com a rede interna.                                                          |
+| D_05   | Os serviços da empresa só podem ser acedidos com dispositivos ligados á rede da empresa.                                              |
 | D_06   | O acesso remoto ao servidor DMZ é restrito apenas ao administrador.                                                                   |
 
 ## Ponto 9
