@@ -37,7 +37,9 @@ Temos as seguintes tarefas a serem realizadas:
 - [x] Devices state synchronization (3 valores).
 - [x] Zones definition (3 valores).
 - [x] Inter-zone rules (6 valores).
-- [ ] Report (4 valores).
+- [x] Report (4 valores).
+
+<div style="page-break-after: always;"></div>
 
 ## Política de Segurança
 
@@ -59,7 +61,7 @@ Com base nisso, as foram definidas as seguintes diretrizes de segurança a serem
 ### Topologia
 
 <p align="center">
-  <img src="img/topology-2.png" alt="Topologia" width="1000"/>
+  <img src="img/topology-2.png" alt="Topologia" width="900"/>
 </p>
 <p align="center">
   <i> Fig. 1 - Topologia da rede </i>
@@ -95,7 +97,7 @@ end
 write
 ```
 
-> Na rota estática apenas é necessário definir o *next-hop* para **um dos *load balancers***, uma vez que estes **estão sincronizados**.
+> Na rota estática apenas é necessário definir o *next-hop* para **um dos *load balancers***, uma vez que estes **estão sincronizados** (no entanto, por questões de redundância, é possível definir rotas para ambos os *load balancers*).
 
 #### R2 (*router* externo):
 ```sql
@@ -162,6 +164,8 @@ save
 > - **IP Hash**: Os *requests* são encaminhados para servidores com base num hash do endereço IP do cliente.
 > - **Least Connections**: Os *requests* são encaminhados para o servidor com o menor número de conexões ativas.
 > - **Random**: Os *requests* são encaminhados para um servidor aleatório, logo nenhum estado é mantido.
+
+> O *virtual address* é partilhado entre os *load balancers* e tem como objetivo garantir a disponibilidade dos serviços, permitindo que os *load balancers* partilhem um único endereço IP virtual.
 
 #### LB1B (*load balancer* inferior interno):
 ```sql
@@ -402,6 +406,8 @@ Também foi feito o mesmo teste, mas com o protocolo ICMP, para verificar se a c
   <i> Fig. 3 - Captura Wireshark entre a rede interna e a rede externa com filtragem para o protocolo ICMP. </i>
 </p>
 
+<div style="page-break-after: always;"></div>
+
 #### Verificação de rotas
 
 As rotas de rede foram verificadas nos *routers* e nos *load balancers* para garantir que o tráfego é encaminhado corretamente para os destinos pretendidos.
@@ -444,9 +450,11 @@ Como podemos verificar pelas tabelas de tradução NAT, os endereços IP dos com
   <i> Fig. 7 - VyOS NAT Translation </i>
 </p>
 
+<div style="page-break-after: always;"></div>
+
 #### Testes de sincronização dos *load balancers*
 
-Usando o Wireshark na interface `eth3` entre os *load balancers* superior e inferior, foi possível verificar a troca de pacotes VRRP (Virtual Router Redundancy Protocol) que permite que os *load balancers* compartilhem um único endereço IP virtual garantindo a disponibilidade dos serviços.
+Usando o Wireshark na interface `eth3` entre os *load balancers* superior e inferior, foi possível verificar a troca de pacotes VRRP (Virtual Router Redundancy Protocol) que permite que os *load balancers* compartilhem um único endereço IP virtual (`192.168.100.1`).
 
 <p align="center">
   <img src="img/wireshark-3.png" alt="Wireshark" width="1000"/>
@@ -490,7 +498,7 @@ E por último foi utilizado o comando `show conntrack-sync internal-cache` que m
   <img src="img/cache-connections.png" alt="Cache de conexões" width="700"/>
 </p>
 <p align="center">
-  <i> Fig. 10 - Cache de conexões conntrack do Load Balancer 1A</i>
+  <i> Fig. 11 - Cache de conexões conntrack do Load Balancer 1A</i>
 </p>
 
 > Estas conexões são armazenadas na cache por motivos de performance, de modo a que seja reduzido o acesso a informação por dispositivos externos.
@@ -503,9 +511,10 @@ Como podemos verificar através do comando `sudo iptables -vL -t mangle`, o trá
   <img src="img/distribution.png" alt="Distribuição de carga" width="700"/>
 </p>
 <p align="center">
-  <i> Fig. 11 - Distribuição de carga entre os Load Balancers 1A </i>
+  <i> Fig. 12 - Distribuição de carga entre os Load Balancers 1A </i>
 </p>
 
+<div style="page-break-after: always;"></div>
 
 ### Questões finais
 
@@ -527,7 +536,7 @@ Como podemos verificar através do comando `sudo iptables -vL -t mangle`, o trá
   <img src="img/topology-1.png" alt="Topologia" width="1000"/>
 </p>
 <p align="center">
-  <i> Fig. 8 - Topologia da rede com a DMZ </i>
+  <i> Fig. 13 - Topologia da rede com a DMZ </i>
 </p>
 
 Servidor DMZ:
@@ -591,20 +600,22 @@ set firewall name ESTABLISHED default-action drop
 
 > A lista de acessos `CONTROLLED` é utilizada para definir as regras de controlo de tráfego (o que pode ou não passar), enquanto a lista `ESTABLISHED` é utilizada para definir as regras de tráfego já estabelecido.
 >
-> Por padrão, todo o tráfego é bloqueado, sendo necessário definir regras para permitir o tráfego entre as zonas.
+> **Por padrão**, todo o tráfego é bloqueado, sendo necessário definir regras para permitir o tráfego entre as zonas.
 
 ### Regras entre Zonas
 
 Foram escolhidas um conjunto de regras para implementar nas firewalls, de forma a garantir a segurança e a integridade da rede mitigando ataques comuns à rede (e.g SYN Flood na regra `6`, DDoS na regra `4`).
 
 Lista de regras entre zonas:
-1. Permitir tráfego de saída do INSIDE dos seguintes protocolos: TCP, UDP, ICMP, HTTP, DNS e HTTPS;
-2. Permitir tráfego já estabelecido pelo INSIDE;
-3. Bloquear qualquer tráfego de saida do OUTSIDE para os endereços IP privados (ip privado: 10.2.2.0/24);
-4. Limitar o tráfego de rede para o servidor DMZ (porta 4 das FWs) para 25 Mbps;
-5. Permitir acesso ao servidor DMZ apenas em horário laboral (9h-18h);
+1. Permitir tráfego de saída do **INSIDE** dos seguintes protocolos: TCP, UDP, ICMP, HTTP, DNS e HTTPS;
+2. Permitir tráfego já estabelecido pelo **INSIDE**;
+3. Bloquear qualquer tráfego de saída do **OUTSIDE** para os endereços IP privados (ip privado: 10.2.2.0/24);
+4. Limitar o tráfego de rede para o servidor **DMZ** (porta 4 das FWs) para 25 Mbps;
+5. Permitir acesso ao servidor **DMZ** apenas em horário laboral (9h-18h);
 6. Limitar o envio de pacotes SYN para 100 por segundo;
-7. Limitar o acesso ao DMZ por protocolo SSH apenas ao administrador da rede (ip 10.2.2.200).
+7. Limitar o acesso ao **DMZ** por protocolo SSH apenas ao administrador da rede (ip 10.2.2.200).
+
+<div style="page-break-after: always;"></div>
 
 Nas *firewalls* `FW1` e `FW2`, as regras assim definidas:
 
@@ -696,7 +707,7 @@ Nas *firewalls* `FW1` e `FW2`, as regras foram aplicadas da seguinte forma:
   <img src="img/Zone_Policy.png" alt="Zone Policy" width="400"/>
 </p>
 <p align="center">
-  <i> Fig. 9 - Diagrama de aplicação das ACLs </i>
+  <i> Fig. 14 - Diagrama de aplicação das ACLs </i>
 </p>
 
 ```sql
@@ -715,6 +726,8 @@ set zone-policy zone INSIDE from DMZ firewall name ESTABLISHED
 
 > Ou seja, todo o tráfego para o exterior e para o DMZ (por conta de ser uma zona isolada) é filtrado, enquanto o tráfego restante é estabelecido por regras já existentes.
 
+<div style="page-break-after: always;"></div>
+
 ### Testes de Funcionamento
 
 #### Teste de Conectividade entre Zonas
@@ -725,7 +738,7 @@ Para testar a conectividade entre as zonas, foram enviados pacotes ICMP do compu
   <img src="img/wireshark-4.png" alt="Captura de ecrã do teste de conectividade entre zonas" width="900"/>
 </p>
 <p align="center">
-  <i> Fig. 10 - Captura de ecrã do teste de conectividade entre INSIDE-OUTSIDE </i>
+  <i> Fig. 15 - Captura de ecrã do teste de conectividade entre INSIDE-OUTSIDE </i>
 </p>
 
 > Deste modo, podemos verificar que os pedidos provenientes do INSIDE não são bloqueados pela firewall, uma vez que a regra `1` permite o tráfego de saída do INSIDE para o OUTSIDE através do protocolo ICMP.
@@ -734,7 +747,7 @@ Para testar a conectividade entre as zonas, foram enviados pacotes ICMP do compu
   <img src="img/wireshark-5.png" alt="Captura de ecrã do teste de conectividade entre zonas" width="900"/>
 </p>
 <p align="center">
-  <i> Fig. 11 - Captura de ecrã do teste de conectividade entre OUTSIDE-INSIDE </i>
+  <i> Fig. 16 - Captura de ecrã do teste de conectividade entre OUTSIDE-INSIDE </i>
 </p>
 
 > Como podemos verificar, os pedidos provenientes do OUTSIDE são bloqueados pela firewall, uma vez que a regra `3` bloqueia o tráfego de saída do OUTSIDE para os endereços IP privados.
@@ -743,7 +756,7 @@ Para testar a conectividade entre as zonas, foram enviados pacotes ICMP do compu
   <img src="img/firewall-log1.png" alt="Log da firewall" width="900"/>
 </p>
 <p align="center">
-  <i> Fig. 12 - Log da firewall </i>
+  <i> Fig. 17 - Log da firewall </i>
 </p>
 
 > Através do comando `show log firewall name ESTABLISHED`, podemos verificar que a regra de tráfego `ESTABLISHED` está a ser aplicada corretamente e todos os pacotes que não foram estabelecidos pela rede interna são bloqueados.
@@ -756,7 +769,7 @@ De modo a verificar se a regra de tráfego `SYN Flood Protection` está a ser ap
   <img src="img/topology-3.png" alt="Topologia com máquina virtual linux" width="900"/>
 </p>
 <p align="center">
-  <i> Fig. 13 - Topologia com máquina virtual linux </i>
+  <i> Fig. 18 - Topologia com máquina virtual linux </i>
 </p>
 
 Através do comando `iperf -c 192.1.1.100 -b 26m`, foi possível enviar pacotes SYN para o servidor DMZ.
@@ -765,7 +778,7 @@ Através do comando `iperf -c 192.1.1.100 -b 26m`, foi possível enviar pacotes 
   <img src="img/tcp-requests.png" alt="Envio de pedidos TCP" width="700"/>
 </p>
 <p align="center">
-  <i> Fig. 14 - Envio de pedidos TCP</i>
+  <i> Fig. 19 - Envio de pedidos TCP</i>
 </p>
 
 > Os resultados foram guardados num ficheiro e exibidos através do comando `cat <ficheiro>`. É de observar que a conexão foi bloqueada após atingir o limite de pacotes SYN por segundo.
@@ -776,7 +789,7 @@ Para verificar se a regra de tráfego `SYN Flood Protection` está a ser aplicad
   <img src="img/firewall-log2.png" alt="Logs da firewall VyOS" width="700"/>
 </p>
 <p align="center">
-  <i> Fig. 15 - Logs da firewall VyOS</i>
+  <i> Fig. 20 - Logs da firewall VyOS</i>
 </p>
 
 > Como podemos verificar, a regra de tráfego `SYN Flood Protection` está a ser aplicada corretamente.
@@ -788,7 +801,19 @@ Como medida para mitigar os ataques DDoS, foi criado um script que permite adici
 ```python
 import paramiko
 
-def add_block_rule(firewall_ip_address, ip_address):
+import re
+
+def validate_ipv4(ip_address):
+    # Regular expression pattern for IPv4 validation
+    ipv4_pattern = r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"
+    
+    # Check if the IP address matches the pattern
+    if re.match(ipv4_pattern, ip_address):
+        return True
+    else:
+        return False
+
+def main(firewall : str, blocklist : str):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
@@ -796,30 +821,31 @@ def add_block_rule(firewall_ip_address, ip_address):
     password = "vyos"
     hostname = firewall_ip_address
     port = 22 # SSH port
-    
+
     try:
-        ssh.connect(hostname, port, username, password)
-        
-        command = f"sudo iptables -A INPUT -s {ip_address} -j DROP"
-        
-        stdin, stdout, stderr = ssh.exec_command(command)
-        
-        if stderr.channel.recv_exit_status() != 0: # Error
-            print(f"Error occurred: {stderr.read().decode()}")
-        else:
-            print(f"Blocking rule added for {ip_address}")
-        
-        ssh.close()
+      with open(blocklist, "r") as file:
+          ssh.connect(hostname, port, username, password)
+          command = "" 
+          attackers = file.readlines()
 
+          for attacker in attackers:
+            if validate_ipv4(attacker) == False:
+              print(f"Invalid IPv4 address: {attacker}")
+              continue
+
+            command = f"sudo iptables -A INPUT -s {attacker} -j DROP"
+
+            stdin, stdout, stderr = ssh.exec_command(command)
+        
+            if stderr.channel.recv_exit_status() != 0: # Error
+              print(f"Error occurred: {stderr.read().decode()}")
+            else:
+              print(f"Blocking rule added for {ip_address}")
+        
+          ssh.close()
+      print("Blocking list added successfully to the " + firewall + " firewall.")
     except Exception as e:
-        print(f"Error connecting to firewall: {e}")
-
-def main(firewall : str, blocklist : str):
-    with open(blocklist, "r") as file:
-        attackers = file.readlines()
-        for attacker in attackers:
-          add_block_rule(firewall, attacker)
-    print("Blocking list added successfully to the " + firewall + " firewall.")
+      print(f"Error reading blocklist file: {e}")
 
 if __name__ == "__main__":
 
@@ -829,6 +855,9 @@ if __name__ == "__main__":
     
     firewall_ip = sys.argv[1]
     blocklist_filepath = sys.argv[2]
+
+    if validate_ipv4(firewall_ip) == False:
+      print("Invalid IPv4 address for the firewall.")
 
     main(firewall_ip, blocklist_filepath)
 ```
