@@ -1,4 +1,4 @@
-# Trabalho prático 1 de Segurança em Redes de Computadores
+# High-Availability Network
 
 ## Autores
 - Ana Vidal (118408)
